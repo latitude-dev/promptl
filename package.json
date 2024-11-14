@@ -20,7 +20,7 @@
     }
   },
   "files": [
-    "src"
+    "dist"
   ],
   "scripts": {
     "dev": "rollup -c -w",
