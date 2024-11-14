@@ -19,8 +19,7 @@ import { Compile } from './compile'
 import Scope from './scope'
 import { CompileOptions } from './types'
 
-type ChainStep<M extends AdapterMessageType> = {
-  conversation: ProviderConversation<M>
+type ChainStep<M extends AdapterMessageType> = ProviderConversation<M> & {
   completed: boolean
 }
 
@@ -141,7 +140,7 @@ export class Chain<M extends AdapterMessageType = Message> {
     if (!this.wasLastStepIsolated) this.globalMessages.push(...messages)
 
     return {
-      conversation: this.adapter.fromPromptl({
+      ...this.adapter.fromPromptl({
         messages: stepMessages,
         config,
       }),

@@ -1,7 +1,7 @@
 import { TAG_NAMES } from '$promptl/constants'
 import CompileError from '$promptl/error/error'
 import { getExpectedError } from '$promptl/test/helpers'
-import { ContentType, MessageRole, TextContent } from '$promptl/types'
+import { MessageRole, TextContent } from '$promptl/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { Chain } from './chain'
@@ -36,15 +36,15 @@ describe('chain', async () => {
       prompt: removeCommonIndent(prompt),
       parameters: {},
     })
-    const { steps, conversation } = await complete({ chain })
+    const { steps, messages } = await complete({ chain })
     expect(steps).toBe(1)
-    expect(conversation.messages.length).toBe(6) // This conversation includes the assistant response
-    expect(conversation.messages[0]!.role).toBe(MessageRole.system)
-    expect(conversation.messages[1]!.role).toBe(MessageRole.user)
-    expect(conversation.messages[2]!.role).toBe(MessageRole.user)
-    expect(conversation.messages[3]!.role).toBe(MessageRole.user)
-    expect(conversation.messages[4]!.role).toBe(MessageRole.assistant) // manually set
-    expect(conversation.messages[5]!.role).toBe(MessageRole.assistant)
+    expect(messages.length).toBe(6) // This conversation includes the assistant response
+    expect(messages[0]!.role).toBe(MessageRole.system)
+    expect(messages[1]!.role).toBe(MessageRole.user)
+    expect(messages[2]!.role).toBe(MessageRole.user)
+    expect(messages[3]!.role).toBe(MessageRole.user)
+    expect(messages[4]!.role).toBe(MessageRole.assistant) // manually set
+    expect(messages[5]!.role).toBe(MessageRole.assistant)
   })
 
   it('fails when nesting steps', async () => {
@@ -75,17 +75,17 @@ describe('chain', async () => {
 
     const chain = new Chain({ prompt })
 
-    const { completed: completed1, conversation: step1 } = await chain.step()
+    const { completed: completed1, ...step1 } = await chain.step()
     expect(completed1).toBe(false)
     expect(step1.messages.length).toBe(1) // The message in the first step
 
-    const { completed: completed2, conversation: step2 } = await chain.step(
+    const { completed: completed2, ...step2 } = await chain.step(
       'Response from step 1',
     )
     expect(completed2).toBe(false)
     expect(step2.messages.length).toBe(3) // Message in the first step, response, and message from second step
 
-    const { completed: completed3, conversation: step3 } = await chain.step(
+    const { completed: completed3, ...step3 } = await chain.step(
       'Response from step 2',
     )
     expect(completed3).toBe(true) // The chain has completed
@@ -169,9 +169,9 @@ describe('chain', async () => {
     `)
 
     const chain = new Chain({ prompt })
-    const { steps, conversation } = await complete({ chain })
+    const { steps, messages } = await complete({ chain })
     expect(steps).toBe(3)
-    const stepMessages = conversation.messages.filter(
+    const stepMessages = messages.filter(
       (m) => m.role === MessageRole.system,
     )
     expect(stepMessages.length).toBe(3)
@@ -194,10 +194,10 @@ describe('chain', async () => {
     `)
 
     const chain = new Chain({ prompt })
-    const { steps, conversation } = await complete({ chain })
+    const { steps, messages } = await complete({ chain })
     expect(steps).toBe(1)
-    expect(conversation.messages.length).toBe(2)
-    expect((conversation.messages[0]!.content[0] as TextContent).text).toBe(
+    expect(messages.length).toBe(2)
+    expect((messages[0]!.content[0] as TextContent).text).toBe(
       'Step 1',
     )
   })
@@ -219,19 +219,19 @@ describe('chain', async () => {
 
     const chain = new Chain({ prompt })
 
-    const { conversation: step1 } = await chain.step()
+    const step1 = await chain.step()
     expect(step1.messages.length).toBe(1)
     expect((step1.messages[0]!.content[0] as TextContent).text).toBe(
       'First step',
     )
 
-    const { conversation: step2 } = await chain.step('First step response')
+    const step2 = await chain.step('First step response')
     expect(step2.messages.length).toBe(1)
     expect((step2.messages[0]!.content[0] as TextContent).text).toBe(
       'Isolated step',
     )
 
-    const { conversation: step3 } = await chain.step('Isolated step response')
+    const step3 = await chain.step('Isolated step response')
     expect(step3.messages.length).toBe(3) // First step, first response, and last step
     expect((step3.messages[0]!.content[0] as TextContent).text).toBe(
       'First step',
@@ -268,9 +268,9 @@ describe('chain', async () => {
       },
     })
 
-    const { conversation } = await complete({ chain })
+    const { messages } = await complete({ chain })
 
-    expect(conversation.messages[0]!).toEqual({
+    expect(messages[0]!).toEqual({
       role: MessageRole.system,
       content: [
         {
@@ -279,7 +279,7 @@ describe('chain', async () => {
         },
       ],
     })
-    expect(conversation.messages[1]).toEqual({
+    expect(messages[1]).toEqual({
       role: MessageRole.assistant,
       content: [
         {
@@ -288,7 +288,7 @@ describe('chain', async () => {
         },
       ],
     })
-    expect(conversation.messages[2]).toEqual({
+    expect(messages[2]).toEqual({
       role: MessageRole.system,
       content: [
         {
@@ -317,9 +317,9 @@ describe('chain', async () => {
     `)
 
     const chain = new Chain({ prompt })
-    const { conversation } = await complete({ chain })
+    const { messages } = await complete({ chain })
 
-    expect(conversation.messages[conversation.messages.length - 2]).toEqual({
+    expect(messages[messages.length - 2]).toEqual({
       role: MessageRole.system,
       content: [
         {
@@ -358,9 +358,9 @@ describe('chain', async () => {
     `)
 
     const correctChain = new Chain({ prompt: correctPrompt })
-    const { conversation } = await complete({ chain: correctChain })
+    const { messages } = await complete({ chain: correctChain })
 
-    expect(conversation.messages[conversation.messages.length - 2]!).toEqual({
+    expect(messages[messages.length - 2]!).toEqual({
       role: MessageRole.system,
       content: [
         {
@@ -400,18 +400,18 @@ describe('chain', async () => {
 
     const chain = new Chain({ prompt })
 
-    const { conversation } = await complete({ chain, maxSteps: 6 })
-    expect(conversation.messages.length).toBe(8)
-    expect((conversation.messages[0]!.content[0]! as TextContent).text).toBe(
+    const { messages } = await complete({ chain, maxSteps: 6 })
+    expect(messages.length).toBe(8)
+    expect((messages[0]!.content[0]! as TextContent).text).toBe(
       '0',
     )
-    expect((conversation.messages[2]!.content[0]! as TextContent).text).toBe(
+    expect((messages[2]!.content[0]! as TextContent).text).toBe(
       '1',
     )
-    expect((conversation.messages[4]!.content[0]! as TextContent).text).toBe(
+    expect((messages[4]!.content[0]! as TextContent).text).toBe(
       '2',
     )
-    expect(conversation.messages[6]).toEqual({
+    expect(messages[6]).toEqual({
       role: MessageRole.system,
       content: [
         {
@@ -461,8 +461,8 @@ describe('chain', async () => {
 
     const chain = new Chain({ prompt })
 
-    const { conversation } = await complete({ chain })
-    const userMessages = conversation.messages.filter(
+    const { messages } = await complete({ chain })
+    const userMessages = messages.filter(
       (m) => m.role === MessageRole.user,
     )
     const userMessageText = userMessages
@@ -482,7 +482,7 @@ describe('chain', async () => {
     `),
     )
 
-    expect(conversation.messages[conversation.messages.length - 2]).toEqual({
+    expect(messages[messages.length - 2]).toEqual({
       role: MessageRole.system,
       content: [
         {
@@ -508,17 +508,17 @@ describe('chain', async () => {
     const chain = new Chain({ prompt })
 
     await chain.step()
-    const { conversation } = await chain.step('foo')
+    const { messages } = await chain.step('foo')
 
-    expect(conversation.messages.length).toBe(3)
+    expect(messages.length).toBe(3)
 
-    const responseMessage = conversation.messages[0]!
+    const responseMessage = messages[0]!
 
-    const rawResponseMessage = conversation.messages[1]!
+    const rawResponseMessage = messages[1]!
     expect(rawResponseMessage.content.length).toBe(1)
     const rawResposne = (rawResponseMessage.content[0] as TextContent).text
 
-    const responseTextMessage = conversation.messages[2]!
+    const responseTextMessage = messages[2]!
     expect(responseTextMessage.content.length).toBe(1)
     const responseText = (responseTextMessage.content[0] as TextContent).text
 
@@ -539,19 +539,19 @@ describe('chain', async () => {
 
     const chain = new Chain({ prompt })
 
-    const { conversation: step1 } = await chain.step()
+    const step1 = await chain.step()
     expect(step1.config.model).toBe('foo-1')
     expect(step1.config.temperature).toBe(0.5)
 
-    const { conversation: step2 } = await chain.step('')
+    const step2 = await chain.step('')
     expect(step2.config.model).toBe('foo-2')
     expect(step2.config.temperature).toBe(0.5)
 
-    const { conversation: step3 } = await chain.step('')
+    const step3 = await chain.step('')
     expect(step3.config.model).toBe('foo-1')
     expect(step3.config.temperature).toBe(1)
 
-    const { conversation: finalConversation } = await chain.step('')
+    const finalConversation = await chain.step('')
     expect(finalConversation.config.model).toBe('foo-1')
     expect(finalConversation.config.temperature).toBe(0.5)
   })

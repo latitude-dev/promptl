@@ -22,8 +22,8 @@ export async function render<M extends AdapterMessageType = Message>({
   adapter?: ProviderAdapter<M>
 } & CompileOptions): Promise<ProviderConversation<M>> {
   const iterator = new Chain({ prompt, parameters, adapter, ...compileOptions })
-  const { conversation } = await iterator.step()
-  return conversation
+  const { messages, config } = await iterator.step()
+  return { messages, config }
 }
 
 export function createChain({
