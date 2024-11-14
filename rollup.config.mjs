@@ -39,6 +39,11 @@ export default [
         file: 'dist/index.js',
         sourcemap: true,
       },
+      {
+        file: 'dist/index.cjs',
+        format: 'cjs',
+        sourcemap: true,
+      },
     ],
     plugins: [
       typescript({
