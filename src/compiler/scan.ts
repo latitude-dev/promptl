@@ -601,7 +601,7 @@ export class Scan {
         const attributes = await this.listTagAttributes({
           tagNode: node,
           scopeContext,
-          literalAttributes: ['as'],
+          literalAttributes: ['as', 'raw'],
         })
 
         for await (const childNode of node.children ?? []) {
@@ -618,6 +618,14 @@ export class Scan {
           const asAttribute = node.attributes.find((a) => a.name === 'as')!
           if (asAttribute.value !== true) {
             const asValue = asAttribute.value.map((n) => n.data).join('')
+            scopeContext.definedVariables.add(asValue)
+          }
+        }
+
+        if (attributes.has('raw')) {
+          const rawAttribute = node.attributes.find((a) => a.name === 'raw')!
+          if (rawAttribute.value !== true) {
+            const asValue = rawAttribute.value.map((n) => n.data).join('')
             scopeContext.definedVariables.add(asValue)
           }
         }

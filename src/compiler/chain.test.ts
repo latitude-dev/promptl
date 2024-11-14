@@ -1,7 +1,7 @@
 import { TAG_NAMES } from '$promptl/constants'
 import CompileError from '$promptl/error/error'
 import { getExpectedError } from '$promptl/test/helpers'
-import { MessageRole, TextContent } from '$promptl/types'
+import { ContentType, MessageRole, TextContent } from '$promptl/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { Chain } from './chain'
@@ -495,9 +495,14 @@ describe('chain', async () => {
 
   it('saves the response in a variable', async () => {
     const prompt = removeCommonIndent(`
-      <${TAG_NAMES.step} as="response" />
+      <${TAG_NAMES.step} raw="rawResponse" as="responseText"/>
       
-      {{response}}
+      <user>
+        {{rawResponse}}
+      </user>
+      <user>
+        {{responseText}}
+      </user>
     `)
 
     const chain = new Chain({ prompt })
@@ -505,19 +510,20 @@ describe('chain', async () => {
     await chain.step()
     const { conversation } = await chain.step('foo')
 
-    expect(conversation.messages.length).toBe(2)
+    expect(conversation.messages.length).toBe(3)
 
     const responseMessage = conversation.messages[0]!
-    expect(responseMessage.role).toBe(MessageRole.assistant)
-    expect(responseMessage.content.length).toBe(1)
-    expect((responseMessage.content[0] as TextContent).text).toBe('foo')
 
-    const additionalMessage = conversation.messages[1]!
-    expect(additionalMessage.role).toBe(MessageRole.system)
-    expect(additionalMessage.content.length).toBe(1)
-    expect((additionalMessage.content[0] as TextContent).text).toBe(
-      JSON.stringify(responseMessage.content),
-    )
+    const rawResponseMessage = conversation.messages[1]!
+    expect(rawResponseMessage.content.length).toBe(1)
+    const rawResposne = (rawResponseMessage.content[0] as TextContent).text
+
+    const responseTextMessage = conversation.messages[2]!
+    expect(responseTextMessage.content.length).toBe(1)
+    const responseText = (responseTextMessage.content[0] as TextContent).text
+
+    expect(rawResposne).toBe(JSON.stringify(responseMessage))
+    expect(responseText).toBe('foo')
   })
 
   it('returns the correct configuration in all steps', async () => {

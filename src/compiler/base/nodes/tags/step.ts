@@ -1,7 +1,7 @@
 import { tagAttributeIsLiteral } from '$promptl/compiler/utils'
 import errors from '$promptl/error/errors'
 import { ChainStepTag } from '$promptl/parser/interfaces'
-import { Config } from '$promptl/types'
+import { Config, ContentType } from '$promptl/types'
 
 import { CompileNodeContext } from '../../types'
 
@@ -33,7 +33,7 @@ export async function compile(
 
   const stepResponse = popStepResponse()
 
-  const { as: varName, ...config } = attributes
+  const { as: textVarName, raw: messageVarName, ...config } = attributes
 
   // The step must be processed.
   if (stepResponse === undefined) {
@@ -62,7 +62,25 @@ export async function compile(
       baseNodeError(errors.invalidStaticAttribute('as'), node)
     }
 
-    scope.set(String(varName), stepResponse?.content)
+    scope.set(String(textVarName), stepResponse)
+  }
+
+  if ('raw' in attributes) {
+    if (!tagAttributeIsLiteral(node, 'raw')) {
+      baseNodeError(errors.invalidStaticAttribute('raw'), node)
+    }
+
+    scope.set(String(messageVarName), stepResponse)
+  }
+
+  // The step has already been process, this is the continuation of the chain.
+  if ('as' in attributes) {
+    if (!tagAttributeIsLiteral(node, 'as')) {
+      baseNodeError(errors.invalidStaticAttribute('as'), node)
+    }
+
+    const textVarValue = (stepResponse?.content ?? []).filter(c => c.type === ContentType.text).map(c => c.text).join('')
+    scope.set(String(textVarName), textVarValue)
   }
 
   groupContent()
