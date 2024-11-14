@@ -238,10 +238,10 @@ describe('ref tags', async () => {
       prompt: prompts['parent'],
       referenceFn: buildReferenceFn(prompts),
     })
-    const { steps, conversation } = await complete({ chain })
+    const { steps, messages } = await complete({ chain })
     expect(steps).toBe(4)
-    expect(conversation.messages.length).toBe(8) // 4 steps + 4 assistant responses
-    const stepsContent = conversation.messages
+    expect(messages.length).toBe(8) // 4 steps + 4 assistant responses
+    const stepsContent = messages
       .filter((m) => m.role != MessageRole.assistant)
       .map((m) => (m.content[0] as TextContent).text)
     expect(stepsContent).toEqual(['Step 1', 'Substep 1', 'Substep 2', 'Step 2'])

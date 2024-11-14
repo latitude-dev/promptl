@@ -1,7 +1,9 @@
 import {
   AssistantMessage,
+  Config,
   ContentType,
   Conversation,
+  Message,
   MessageContent,
 } from '$promptl/types'
 import { expect } from 'vitest'
@@ -31,27 +33,26 @@ export async function complete({
   maxSteps?: number
 }): Promise<{
   response: MessageContent[]
-  conversation: Conversation
+  messages: Message[]
+  config: Config
   steps: number
 }> {
   let steps = 0
-  let conversation: Conversation
 
   let responseMessage: Omit<AssistantMessage, 'role'> | undefined
   while (true) {
-    const { completed, conversation: _conversation } =
+    const { completed, messages, config } =
       await chain.step(responseMessage)
-
-    conversation = _conversation
 
     if (completed)
       return {
-        conversation,
+        messages,
+        config,
         steps,
         response: responseMessage!.content as MessageContent[],
       }
 
-    const response = callback ? await callback(conversation) : 'RESPONSE'
+    const response = callback ? await callback({ messages, config }) : 'RESPONSE'
     responseMessage = { content: [{ type: ContentType.text, text: response }] }
     steps++
 
