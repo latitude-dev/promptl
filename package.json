@@ -1,6 +1,6 @@
 {
   "name": "@latitude-data/promptl",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Latitude Data",
   "license": "MIT",
   "description": "Compiler for PromptL, the prompt language",
