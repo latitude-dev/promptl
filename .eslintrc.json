@@ -1,0 +1,10 @@
+{
+  "extends": ["./eslint.js"],
+  "env": {
+    "node": true,
+    "browser": true
+  },
+  "rules": {
+    "no-constant-condition": "off"
+  }
+}
