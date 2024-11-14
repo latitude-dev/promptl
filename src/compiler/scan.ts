@@ -45,7 +45,7 @@ function copyScopeContext(scopeContext: ScopeContext): ScopeContext {
   }
 }
 
-export class ReadMetadata {
+export class Scan {
   private rawText: string
   private referenceFn?: ReferencePromptFn
   private fullPath: string
@@ -547,18 +547,18 @@ export class ReadMetadata {
             return
           }
 
-          const refReadMetadata = new ReadMetadata({
+          const refScan = new Scan({
             document: refDocument,
             referenceFn: this.referenceFn,
           })
-          refReadMetadata.accumulatedToolCalls = this.accumulatedToolCalls
-          refReadMetadata.references = {
+          refScan.accumulatedToolCalls = this.accumulatedToolCalls
+          refScan.references = {
             ...this.references,
             [this.fullPath]: [...currentReferences, refPromptPath],
           }
-          refReadMetadata.referenceDepth = this.referenceDepth + 1
+          refScan.referenceDepth = this.referenceDepth + 1
 
-          const refPromptMetadata = await refReadMetadata.run()
+          const refPromptMetadata = await refScan.run()
           refPromptMetadata.parameters.forEach((paramName: string) => {
             if (!attributes.has(paramName)) {
               this.baseNodeError(
@@ -580,7 +580,7 @@ export class ReadMetadata {
             }
             this.baseNodeError(errors.referenceError(error), node)
           })
-          this.accumulatedToolCalls = refReadMetadata.accumulatedToolCalls
+          this.accumulatedToolCalls = refScan.accumulatedToolCalls
           this.referencedHashes.push(refPromptMetadata.hash)
         }
 

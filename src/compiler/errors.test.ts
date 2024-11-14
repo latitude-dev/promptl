@@ -1,7 +1,7 @@
 import CompileError from '$promptl/error/error'
 import { describe, expect, it } from 'vitest'
 
-import { readMetadata, render } from '.'
+import { scan, render } from '.'
 import { removeCommonIndent } from './utils'
 
 const getExpectedError = async (
@@ -32,11 +32,11 @@ const expectBothErrors = async ({
   }, `Expected compile to throw '${code}'`)
   expect(compileError.code).toBe(code)
 
-  const metadata = await readMetadata({
+  const metadata = await scan({
     prompt: removeCommonIndent(prompt),
   })
   if (metadata.errors.length === 0) {
-    throw new Error(`Expected readMetadata to throw '${code}'`)
+    throw new Error(`Expected scan to throw '${code}'`)
   }
   const metadataError = metadata.errors[0]!
 
@@ -44,7 +44,7 @@ const expectBothErrors = async ({
   expect(compileError.code).toBe(metadataError.code)
 }
 
-describe(`all compilation errors that don't require value resolution are caught both in compile and readMetadata`, () => {
+describe(`all compilation errors that don't require value resolution are caught both in compile and scan`, () => {
   it.todo('unsupported-base-node-type') // This one requires the parser to return an unsupported node type, which is not reproducible
 
   it('variable-already-declared', async () => {

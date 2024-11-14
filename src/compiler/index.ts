@@ -8,7 +8,7 @@ import { ConversationMetadata, Message } from '$promptl/types'
 import { z } from 'zod'
 
 import { Chain } from './chain'
-import { ReadMetadata } from './readMetadata'
+import { Scan } from './scan'
 import type { CompileOptions, Document, ReferencePromptFn } from './types'
 
 export async function render<M extends AdapterMessageType = Message>({
@@ -36,7 +36,7 @@ export function createChain({
   return new Chain({ prompt, parameters })
 }
 
-export function readMetadata({
+export function scan({
   prompt,
   fullPath,
   referenceFn,
@@ -49,7 +49,7 @@ export function readMetadata({
   withParameters?: string[]
   configSchema?: z.ZodType
 }): Promise<ConversationMetadata> {
-  return new ReadMetadata({
+  return new Scan({
     document: { path: fullPath ?? '', content: prompt },
     referenceFn,
     withParameters,

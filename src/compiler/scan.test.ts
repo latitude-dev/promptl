@@ -3,7 +3,7 @@ import CompileError from '$promptl/error/error'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 
-import { readMetadata } from '.'
+import { scan } from '.'
 import { Document } from './types'
 import { removeCommonIndent } from './utils'
 
@@ -27,9 +27,9 @@ describe('hash', async () => {
     const prompt2 = 'This is a prompt'
     const prompt3 = 'This is another prompt'
 
-    const metadata1 = await readMetadata({ prompt: prompt1 })
-    const metadata2 = await readMetadata({ prompt: prompt2 })
-    const metadata3 = await readMetadata({ prompt: prompt3 })
+    const metadata1 = await scan({ prompt: prompt1 })
+    const metadata2 = await scan({ prompt: prompt2 })
+    const metadata3 = await scan({ prompt: prompt3 })
 
     expect(metadata1.hash).toBe(metadata2.hash)
     expect(metadata1.hash).not.toBe(metadata3.hash)
@@ -40,11 +40,11 @@ describe('hash', async () => {
     const child1 = 'ABCDEFG'
     const child2 = '1234567'
 
-    const metadata1 = await readMetadata({
+    const metadata1 = await scan({
       prompt: parent,
       referenceFn: referenceFn({ child: child1 }),
     })
-    const metadata2 = await readMetadata({
+    const metadata2 = await scan({
       prompt: parent,
       referenceFn: referenceFn({ child: child2 }),
     })
@@ -70,7 +70,7 @@ describe('hash', async () => {
       `),
     }
 
-    const parentMetadata1 = await readMetadata({
+    const parentMetadata1 = await scan({
       prompt: prompts['parent']!,
       referenceFn: referenceFn({
         ...prompts,
@@ -78,7 +78,7 @@ describe('hash', async () => {
       }),
     })
 
-    const parentMetadata2 = await readMetadata({
+    const parentMetadata2 = await scan({
       prompt: prompts['parent']!,
       referenceFn: referenceFn({
         ...prompts,
@@ -109,7 +109,7 @@ describe('hash', async () => {
       `),
     }
 
-    const parentMetadatav1 = await readMetadata({
+    const parentMetadatav1 = await scan({
       prompt: prompts['parent']!,
       referenceFn: referenceFn({
         ...prompts,
@@ -117,7 +117,7 @@ describe('hash', async () => {
       }),
     })
 
-    const parentMetadatav2 = await readMetadata({
+    const parentMetadatav2 = await scan({
       prompt: prompts['parent']!,
       referenceFn: referenceFn({
         ...prompts,
@@ -139,7 +139,7 @@ describe('config', async () => {
        - quux
       ---
     `
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt: removeCommonIndent(prompt),
     })
 
@@ -161,7 +161,7 @@ describe('config', async () => {
       --
     `)
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt: removeCommonIndent(prompt),
     })
 
@@ -181,7 +181,7 @@ describe('config', async () => {
       \\---
     `)
 
-    const metadata = await readMetadata({ prompt })
+    const metadata = await scan({ prompt })
 
     expect(metadata.config).toEqual({})
   })
@@ -197,7 +197,7 @@ describe('config', async () => {
       ---
     `)
 
-    const metadata = await readMetadata({ prompt })
+    const metadata = await scan({ prompt })
 
     expect(metadata.errors.length).toBe(1)
     expect(metadata.errors[0]).toBeInstanceOf(CompileError)
@@ -212,7 +212,7 @@ describe('config', async () => {
       ---
     `)
 
-    const metadata = await readMetadata({ prompt })
+    const metadata = await scan({ prompt })
 
     expect(metadata.config).toEqual({ foo: 'bar', baa: null })
     expect(metadata.errors.length).toBe(1)
@@ -230,7 +230,7 @@ describe('config', async () => {
       ---
     `)
 
-    const metadata = await readMetadata({ prompt })
+    const metadata = await scan({ prompt })
 
     expect(metadata.errors.length).toBe(1)
     expect(metadata.errors[0]).toBeInstanceOf(CompileError)
@@ -242,7 +242,7 @@ describe('config', async () => {
       Lorem ipsum
     `)
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt,
       configSchema: z.object({
         foo: z.string(),
@@ -261,7 +261,7 @@ describe('config', async () => {
       ---
     `)
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt,
       configSchema: z.object({
         foo: z.string(),
@@ -280,7 +280,7 @@ describe('config', async () => {
       ---
     `)
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt,
       configSchema: z.object({
         foo: z.string(),
@@ -303,7 +303,7 @@ describe('config', async () => {
 
     const expectedErrorPosition = prompt.indexOf('baa')
 
-    const metadata = await readMetadata({ prompt })
+    const metadata = await scan({ prompt })
 
     expect(metadata.errors.length).toBe(1)
     expect(metadata.errors[0]).toBeInstanceOf(CompileError)
@@ -318,7 +318,7 @@ describe('config', async () => {
       ---
     `)
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt,
       configSchema: z.object({
         foo: z.number(),
@@ -341,7 +341,7 @@ describe('config', async () => {
       {{ endif }}
     `)
 
-    const metadata = await readMetadata({ prompt })
+    const metadata = await scan({ prompt })
 
     expect(metadata.errors.length).toBe(1)
     expect(metadata.errors[0]).toBeInstanceOf(CompileError)
@@ -355,7 +355,7 @@ describe('parameters', async () => {
       {{ foo }}
     `
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt: removeCommonIndent(prompt),
     })
 
@@ -368,7 +368,7 @@ describe('parameters', async () => {
       {{ foo }}
     `
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt: removeCommonIndent(prompt),
     })
 
@@ -383,7 +383,7 @@ describe('parameters', async () => {
       {{ endfor }}
     `
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt: removeCommonIndent(prompt),
     })
 
@@ -405,7 +405,7 @@ describe('referenced prompts', async () => {
       `),
     }
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt: prompts['parent']!,
       referenceFn: referenceFn(prompts),
     })
@@ -431,14 +431,14 @@ describe('referenced prompts', async () => {
       `),
     }
 
-    const metadataCorrect = await readMetadata({
+    const metadataCorrect = await scan({
       prompt: prompts['parentCorrect']!,
       referenceFn: referenceFn(prompts),
     })
 
     expect(metadataCorrect.errors.length).toBe(0)
 
-    const metadataWrong = await readMetadata({
+    const metadataWrong = await scan({
       prompt: prompts['parentWrong']!,
       referenceFn: referenceFn(prompts),
     })
@@ -456,7 +456,7 @@ describe('syntax errors', async () => {
       </user>
     `
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt,
     })
 
@@ -477,7 +477,7 @@ describe('syntax errors', async () => {
       `),
     }
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt: prompts['parent']!,
       referenceFn: referenceFn(prompts),
     })
@@ -501,7 +501,7 @@ describe('syntax errors', async () => {
       `),
     }
 
-    const metadata = await readMetadata({
+    const metadata = await scan({
       prompt: prompts['parent']!,
       referenceFn: referenceFn(prompts),
     })
