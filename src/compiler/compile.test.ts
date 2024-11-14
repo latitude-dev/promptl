@@ -9,7 +9,7 @@ import {
 } from '$promptl/types'
 import { describe, expect, it } from 'vitest'
 
-import { render } from '.'
+import { Adapters, render } from '.'
 import { removeCommonIndent } from './utils'
 
 async function getCompiledText(
@@ -19,6 +19,7 @@ async function getCompiledText(
   const result = await render({
     prompt: removeCommonIndent(prompt),
     parameters,
+    adapter: Adapters.default,
   })
 
   return result.messages.reduce((acc: string, message: Message) => {
@@ -36,7 +37,7 @@ async function getCompiledText(
 describe('automatic message grouping', async () => {
   it('returns system messages by default', async () => {
     const prompt = 'Hello world!'
-    const result = await render({ prompt })
+    const result = await render({ prompt, adapter: Adapters.default })
     const message = result.messages[0]!
     expect(message.role).toBe(MessageRole.system)
   })
@@ -53,7 +54,7 @@ describe('automatic message grouping', async () => {
       </content-image>
       speaking
     `
-    const result = await render({ prompt })
+    const result = await render({ prompt, adapter: Adapters.default })
     const messages = result.messages
 
     expect(messages.length).toBe(1)
@@ -69,7 +70,7 @@ describe('automatic message grouping', async () => {
 
   it('allows defining the default role', async () => {
     const prompt = 'Hello world!'
-    const result = await render({ prompt, defaultRole: MessageRole.user })
+    const result = await render({ prompt, defaultRole: MessageRole.user, adapter: Adapters.default })
     const message = result.messages[0]!
     expect(message.role).toBe(MessageRole.user)
   })
@@ -88,6 +89,7 @@ describe('config section', async () => {
     const result = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default,
     })
 
     expect(result.config).toEqual({
@@ -108,6 +110,7 @@ describe('comments', async () => {
     const result = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(1)
@@ -134,6 +137,7 @@ describe('comments', async () => {
     const result = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(1)
@@ -166,6 +170,7 @@ describe('variable assignment', async () => {
       render({
         prompt: removeCommonIndent(prompt),
         parameters: {},
+        adapter: Adapters.default,
       })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('variable-not-declared')
@@ -198,6 +203,7 @@ describe('variable assignment', async () => {
       render({
         prompt: removeCommonIndent(prompt),
         parameters: {},
+        adapter: Adapters.default,
       })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('variable-not-declared')
@@ -214,6 +220,7 @@ describe('variable assignment', async () => {
       render({
         prompt: removeCommonIndent(prompt),
         parameters: {},
+        adapter: Adapters.default,
       })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('variable-not-declared')
@@ -252,6 +259,7 @@ describe('variable assignment', async () => {
       render({
         prompt: removeCommonIndent(prompt),
         parameters: {},
+        adapter: Adapters.default,
       })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('property-not-exists')
@@ -266,6 +274,7 @@ describe('variable assignment', async () => {
       render({
         prompt: removeCommonIndent(prompt),
         parameters: {},
+        adapter: Adapters.default,
       })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('parse-error') // Requirement is already implemented in the parser
@@ -303,6 +312,7 @@ describe('variable assignment', async () => {
       render({
         prompt: removeCommonIndent(prompt),
         parameters: {},
+        adapter: Adapters.default,
       })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('invalid-update')

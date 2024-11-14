@@ -1,6 +1,6 @@
 import path from 'path'
 
-import { Chain, render } from '$promptl/compiler'
+import { Adapters, Chain, render } from '$promptl/compiler'
 import { complete } from '$promptl/compiler/test/helpers'
 import { removeCommonIndent } from '$promptl/compiler/utils'
 import CompileError from '$promptl/error/error'
@@ -37,6 +37,7 @@ describe('ref tags', async () => {
     const result = await render({
       prompt: prompts['parent'],
       referenceFn: buildReferenceFn(prompts),
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(1)
@@ -55,7 +56,7 @@ describe('ref tags', async () => {
       child: 'child message',
     }
 
-    const action = () => render({ prompt: prompts['parent'] })
+    const action = () => render({ prompt: prompts['parent'], adapter: Adapters.default })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('missing-reference-function')
   })
@@ -69,6 +70,7 @@ describe('ref tags', async () => {
       render({
         prompt: prompts['parent'],
         referenceFn: buildReferenceFn(prompts),
+        adapter: Adapters.default,
       })
 
     const error = await getExpectedError(action, CompileError)
@@ -86,6 +88,7 @@ describe('ref tags', async () => {
         prompt: prompts['parent'],
         parameters: { foo: 'bar' },
         referenceFn: buildReferenceFn(prompts),
+        adapter: Adapters.default,
       })
 
     const error = await getExpectedError(action, CompileError)
@@ -101,6 +104,7 @@ describe('ref tags', async () => {
     const result = await render({
       prompt: prompts['parent'],
       referenceFn: buildReferenceFn(prompts),
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(1)
@@ -123,6 +127,7 @@ describe('ref tags', async () => {
       prompt: prompts['parent'],
       parameters: { foo: 1 },
       referenceFn: buildReferenceFn(prompts),
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(1)
@@ -147,6 +152,7 @@ describe('ref tags', async () => {
     const result = await render({
       prompt: prompts['parent'],
       referenceFn: buildReferenceFn(prompts),
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(2)
@@ -179,6 +185,7 @@ describe('ref tags', async () => {
     const result = await render({
       prompt: prompts['parent'],
       referenceFn: buildReferenceFn(prompts),
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(1)
@@ -205,6 +212,7 @@ describe('ref tags', async () => {
       render({
         prompt: prompts['parent'],
         referenceFn: buildReferenceFn(prompts),
+        adapter: Adapters.default,
       })
 
     const error = await getExpectedError(action, CompileError)
@@ -237,6 +245,7 @@ describe('ref tags', async () => {
     const chain = new Chain({
       prompt: prompts['parent'],
       referenceFn: buildReferenceFn(prompts),
+      adapter: Adapters.default,
     })
     const { steps, messages } = await complete({ chain })
     expect(steps).toBe(4)

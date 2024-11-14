@@ -14,7 +14,7 @@ import type { CompileOptions, Document, ReferencePromptFn } from './types'
 export async function render<M extends AdapterMessageType = Message>({
   prompt,
   parameters = {},
-  adapter = Adapters.default as ProviderAdapter<M>,
+  adapter = Adapters.openai as ProviderAdapter<M>,
   ...compileOptions
 }: {
   prompt: string
@@ -57,4 +57,4 @@ export function scan({
   }).run()
 }
 
-export { Chain, type Document, type ReferencePromptFn }
+export { Chain, Adapters, type Document, type ReferencePromptFn }

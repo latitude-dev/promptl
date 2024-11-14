@@ -1,4 +1,4 @@
-import { render } from '$promptl/compiler'
+import { Adapters, render } from '$promptl/compiler'
 import { removeCommonIndent } from '$promptl/compiler/utils'
 import CompileError from '$promptl/error/error'
 import { getExpectedError } from '$promptl/test/helpers'
@@ -14,7 +14,7 @@ import { describe, expect, it } from 'vitest'
 describe('content tags', async () => {
   it('adds stray text at root level as text contents inside a system message', async () => {
     const prompt = 'Test message'
-    const result = await render({ prompt })
+    const result = await render({ prompt, adapter: Adapters.default })
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]! as SystemMessage
     expect(message.role).toBe('system')
@@ -25,7 +25,7 @@ describe('content tags', async () => {
 
   it('adds stray text inside a message as the message content', async () => {
     const prompt = '<user>Test user message</user>'
-    const result = await render({ prompt })
+    const result = await render({ prompt, adapter: Adapters.default })
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]! as UserMessage
     expect(message.role).toBe('user')
@@ -43,7 +43,7 @@ describe('content tags', async () => {
         <content-text> Text 3 </content-text>
       </user>
     `)
-    const result = await render({ prompt })
+    const result = await render({ prompt, adapter: Adapters.default })
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]! as UserMessage
     expect(message.role).toBe('user')
@@ -64,7 +64,7 @@ describe('content tags', async () => {
       <content-text> Text 2 </content-text>
       Text 3
     `)
-    const result = await render({ prompt })
+    const result = await render({ prompt, adapter: Adapters.default })
 
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]!
@@ -82,7 +82,7 @@ describe('content tags', async () => {
       <content type="text"> Text </content>
       <content type="image"> Image </content>
     `)
-    const result = await render({ prompt })
+    const result = await render({ prompt, adapter: Adapters.default })
 
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]!
@@ -99,7 +99,7 @@ describe('content tags', async () => {
         <content type="text"> Text </content>
       </content>
     `)
-    const error = await getExpectedError(() => render({ prompt }), CompileError)
+    const error = await getExpectedError(() => render({ prompt, adapter: Adapters.default }), CompileError)
     expect(error.code).toBe('content-tag-inside-content')
   })
 })
@@ -111,7 +111,7 @@ describe('tool-call tags', async () => {
         <tool-call name="get_weather" id="123" />
       </assistant>
     `)
-    const result = await render({ prompt })
+    const result = await render({ prompt, adapter: Adapters.default })
 
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]! as SystemMessage
@@ -130,7 +130,7 @@ describe('tool-call tags', async () => {
       </user>
     `)
 
-    const error = await getExpectedError(() => render({ prompt }), CompileError)
+    const error = await getExpectedError(() => render({ prompt, adapter: Adapters.default }), CompileError)
     expect(error.code).toBe('invalid-tool-call-placement')
   })
 
@@ -143,7 +143,7 @@ describe('tool-call tags', async () => {
       </assistant>
     `)
 
-    const error = await getExpectedError(() => render({ prompt }), CompileError)
+    const error = await getExpectedError(() => render({ prompt, adapter: Adapters.default }), CompileError)
     expect(error.code).toBe('content-tag-inside-content')
   })
 })

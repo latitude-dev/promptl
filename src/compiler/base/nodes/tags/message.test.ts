@@ -1,4 +1,4 @@
-import { render } from '$promptl/compiler'
+import { Adapters, render } from '$promptl/compiler'
 import { removeCommonIndent } from '$promptl/compiler/utils'
 import { CUSTOM_TAG_END, CUSTOM_TAG_START } from '$promptl/constants'
 import CompileError from '$promptl/error/error'
@@ -22,6 +22,7 @@ describe('messages', async () => {
     const result = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(3)
@@ -58,12 +59,14 @@ describe('messages', async () => {
       parameters: {
         role: 'system',
       },
+      adapter: Adapters.default,
     })
     const result2 = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {
         role: 'user',
       },
+      adapter: Adapters.default,
     })
 
     expect(result1.messages.length).toBe(1)
@@ -85,6 +88,7 @@ describe('messages', async () => {
       render({
         prompt: removeCommonIndent(prompt),
         parameters: {},
+        adapter: Adapters.default,
       })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('invalid-message-role')
@@ -100,6 +104,7 @@ describe('messages', async () => {
       render({
         prompt: removeCommonIndent(prompt),
         parameters: {},
+        adapter: Adapters.default,
       })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('message-tag-inside-message')
@@ -113,6 +118,7 @@ describe('messages', async () => {
     const result = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(2)
@@ -140,6 +146,7 @@ describe('messages', async () => {
     const result = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default,
     })
 
     expect(result.messages).toEqual([
@@ -185,6 +192,7 @@ describe('message contents', async () => {
     const result = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(1)
@@ -211,6 +219,7 @@ describe('message contents', async () => {
     const result = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(1)
@@ -236,6 +245,7 @@ describe('message contents', async () => {
     const result = await render({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default,
     })
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]!

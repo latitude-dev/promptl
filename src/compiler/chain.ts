@@ -46,7 +46,7 @@ export class Chain<M extends AdapterMessageType = Message> {
   constructor({
     prompt,
     parameters = {},
-    adapter = Adapters.default as ProviderAdapter<M>,
+    adapter = Adapters.openai as ProviderAdapter<M>,
     ...compileOptions
   }: {
     prompt: string

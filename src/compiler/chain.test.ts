@@ -7,11 +7,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { Chain } from './chain'
 import { complete } from './test/helpers'
 import { removeCommonIndent } from './utils'
+import { Adapters } from '$promptl/providers'
 
 describe('chain', async () => {
   it('does not return "completed" in the first iteration', async () => {
     const prompt = 'Hello world'
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
     const { completed } = await chain.step()
     expect(completed).toBe(false)
   })
@@ -35,6 +36,7 @@ describe('chain', async () => {
     const chain = new Chain({
       prompt: removeCommonIndent(prompt),
       parameters: {},
+      adapter: Adapters.default
     })
     const { steps, messages } = await complete({ chain })
     expect(steps).toBe(1)
@@ -56,7 +58,7 @@ describe('chain', async () => {
       </step>
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
     const action = () => chain.step()
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('step-tag-inside-step')
@@ -73,7 +75,7 @@ describe('chain', async () => {
       </step>
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     const { completed: completed1, ...step1 } = await chain.step()
     expect(completed1).toBe(false)
@@ -102,7 +104,7 @@ describe('chain', async () => {
       </step>
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     await chain.step()
     const action = () => chain.step()
@@ -120,7 +122,7 @@ describe('chain', async () => {
       </step>
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     const action = () => chain.step('Made up response')
     const error = await getExpectedError(action, Error)
@@ -137,7 +139,7 @@ describe('chain', async () => {
       <step />
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     await complete({ chain })
     const action = () => chain.step()
@@ -168,7 +170,7 @@ describe('chain', async () => {
       </step>
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
     const { steps, messages } = await complete({ chain })
     expect(steps).toBe(3)
     const stepMessages = messages.filter(
@@ -193,7 +195,7 @@ describe('chain', async () => {
       {{ endif }}
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
     const { steps, messages } = await complete({ chain })
     expect(steps).toBe(1)
     expect(messages.length).toBe(2)
@@ -217,7 +219,7 @@ describe('chain', async () => {
       </step>
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     const step1 = await chain.step()
     expect(step1.messages.length).toBe(1)
@@ -266,6 +268,7 @@ describe('chain', async () => {
         func1,
         func2,
       },
+      adapter: Adapters.default
     })
 
     const { messages } = await complete({ chain })
@@ -316,7 +319,7 @@ describe('chain', async () => {
       </step>
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
     const { messages } = await complete({ chain })
 
     expect(messages[messages.length - 2]).toEqual({
@@ -357,7 +360,7 @@ describe('chain', async () => {
       {{bar}}
     `)
 
-    const correctChain = new Chain({ prompt: correctPrompt })
+    const correctChain = new Chain({ prompt: correctPrompt, adapter: Adapters.default })
     const { messages } = await complete({ chain: correctChain })
 
     expect(messages[messages.length - 2]!).toEqual({
@@ -373,6 +376,7 @@ describe('chain', async () => {
     const incorrectChain = new Chain({
       prompt: incorrectPrompt,
       parameters: {},
+      adapter: Adapters.default
     })
 
     const action = () => complete({ chain: incorrectChain })
@@ -398,7 +402,7 @@ describe('chain', async () => {
       {{foo}}
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     const { messages } = await complete({ chain, maxSteps: 6 })
     expect(messages.length).toBe(8)
@@ -432,7 +436,7 @@ describe('chain', async () => {
       {{foo}}
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     const action = () => complete({ chain })
     const error = await getExpectedError(action, CompileError)
@@ -459,7 +463,7 @@ describe('chain', async () => {
       {{endfor}}
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     const { messages } = await complete({ chain })
     const userMessages = messages.filter(
@@ -505,7 +509,7 @@ describe('chain', async () => {
       </user>
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     await chain.step()
     const { messages } = await chain.step('foo')
@@ -537,7 +541,7 @@ describe('chain', async () => {
       <step temperature={{1}} />  /* step3 */
     `)
 
-    const chain = new Chain({ prompt })
+    const chain = new Chain({ prompt, adapter: Adapters.default })
 
     const step1 = await chain.step()
     expect(step1.config.model).toBe('foo-1')
