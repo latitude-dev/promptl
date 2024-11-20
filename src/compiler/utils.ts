@@ -5,6 +5,7 @@ import {
   ElementTag,
   MessageTag,
   ReferenceTag,
+  ScopeTag,
 } from '$promptl/parser/interfaces'
 import { ContentTypeTagName, MessageRole } from '$promptl/types'
 import { Scalar, Node as YAMLItem, YAMLMap, YAMLSeq } from 'yaml'
@@ -55,6 +56,10 @@ export function isRefTag(tag: ElementTag): tag is ReferenceTag {
 
 export function isChainStepTag(tag: ElementTag): tag is ChainStepTag {
   return tag.name === TAG_NAMES.step
+}
+
+export function isScopeTag(tag: ElementTag): tag is ScopeTag {
+  return tag.name === TAG_NAMES.scope
 }
 
 export function tagAttributeIsLiteral(tag: ElementTag, name: string): boolean {

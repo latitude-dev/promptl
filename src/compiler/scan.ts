@@ -36,6 +36,7 @@ import {
   isContentTag,
   isMessageTag,
   isRefTag,
+  isScopeTag,
 } from './utils'
 
 function copyScopeContext(scopeContext: ScopeContext): ScopeContext {
@@ -54,6 +55,8 @@ export class Scan {
 
   private config?: Config
   private configPosition?: { start: number; end: number }
+  private resolvedPrompt: string
+  private resolvedPromptOffset: number = 0
   private hasContent: boolean = false
 
   private accumulatedToolCalls: ContentTag[] = []
@@ -79,6 +82,8 @@ export class Scan {
     this.fullPath = document.path
     this.withParameters = withParameters
     this.configSchema = configSchema
+
+    this.resolvedPrompt = document.content
   }
 
   async run(): Promise<ConversationMetadata> {
@@ -117,6 +122,14 @@ export class Scan {
       this.baseNodeError(errors.missingConfig, fragment, { start: 0, end: 0 })
     }
 
+    const resolvedPrompt =
+    Object.keys(this.config ?? {}).length > 0
+      ? '---\n' +
+        yaml.stringify(this.config, { indent: 2 }) +
+        '---\n' +
+        this.resolvedPrompt
+      : this.resolvedPrompt
+
     const setConfig = (config: Config) => {
       const start = this.configPosition?.start ?? 0
       const end = this.configPosition?.end ?? 0
@@ -143,6 +156,7 @@ export class Scan {
         ...(scopeContext.onlyPredefinedVariables ?? new Set([])),
       ]),
       hash,
+      resolvedPrompt,
       config: this.config ?? {},
       errors: this.errors,
       setConfig,
@@ -235,8 +249,12 @@ export class Scan {
       return
     }
 
-    if (node.type === 'Comment') {
-      // do nothing
+    if (node.type === 'Comment' || node.type === 'Config') {
+      /* Remove from the resolved prompt */
+      const start = node.start! + this.resolvedPromptOffset
+      const end = node.end! + this.resolvedPromptOffset
+      this.resolvedPrompt = this.resolvedPrompt.slice(0, start) + this.resolvedPrompt.slice(end)
+      this.resolvedPromptOffset -= end - start
     }
 
     if (node.type === 'Config') {
@@ -526,6 +544,10 @@ export class Scan {
 
         const currentReferences = this.references[this.fullPath] ?? []
 
+        const start = node.start! + this.resolvedPromptOffset
+        const end = node.end! + this.resolvedPromptOffset
+        let resolvedRefPrompt = this.resolvedPrompt.slice(start, end)
+
         const resolveRef = async () => {
           if (!this.referenceFn) {
             this.baseNodeError(errors.missingReferenceFunction, node)
@@ -582,6 +604,7 @@ export class Scan {
           })
           this.accumulatedToolCalls = refScan.accumulatedToolCalls
           this.referencedHashes.push(refPromptMetadata.hash)
+          resolvedRefPrompt = refScan.resolvedPrompt
         }
 
         try {
@@ -589,6 +612,57 @@ export class Scan {
         } catch (error: unknown) {
           this.baseNodeError(errors.referenceError(error), node)
         }
+
+        const pretext = this.resolvedPrompt.slice(0, start)
+        const posttext = this.resolvedPrompt.slice(end)
+        
+        const attributeTags = node.attributes.filter(a => a.name !== REFERENCE_PROMPT_ATTR).map((attr) => {
+          const attrStart = attr.start! + this.resolvedPromptOffset
+          const attrEnd = attr.end! + this.resolvedPromptOffset
+          return this.resolvedPrompt.slice(attrStart, attrEnd)
+        })
+
+        const resolvedNode =
+          `<${TAG_NAMES.scope} ${attributeTags.join(' ')}>` +
+          resolvedRefPrompt +
+          `</${TAG_NAMES.scope}>`
+
+        this.resolvedPrompt = pretext + resolvedNode + posttext
+        this.resolvedPromptOffset += resolvedNode.length - (end - start)
+
+        return
+      }
+      
+      if (isScopeTag(node)) {
+        const attributes = await this.listTagAttributes({
+          tagNode: node,
+          scopeContext,
+        })
+
+        const newScopeContext: ScopeContext = {
+          onlyPredefinedVariables: scopeContext.onlyPredefinedVariables,
+          usedUndefinedVariables: new Set<string>(),
+          definedVariables: attributes,
+        }
+
+        for await (const childNode of node.children ?? []) {
+          await this.readBaseMetadata({
+            node: childNode,
+            scopeContext: newScopeContext,
+            isInsideStepTag,
+            isInsideMessageTag,
+            isInsideContentTag,
+          })
+        }
+
+        newScopeContext.usedUndefinedVariables.forEach((variable) => {
+          if (!attributes.has(variable)) {
+            this.baseNodeError(
+              errors.referenceMissingParameter(variable),
+              node,
+            )
+          }
+        })
 
         return
       }

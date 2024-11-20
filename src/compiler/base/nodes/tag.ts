@@ -3,6 +3,7 @@ import {
   isContentTag,
   isMessageTag,
   isRefTag,
+  isScopeTag,
 } from '$promptl/compiler/utils'
 import errors from '$promptl/error/errors'
 import {
@@ -11,6 +12,7 @@ import {
   ElementTag,
   MessageTag,
   ReferenceTag,
+  ScopeTag,
 } from '$promptl/parser/interfaces'
 
 import { CompileNodeContext } from '../types'
@@ -18,6 +20,7 @@ import { compile as resolveContent } from './tags/content'
 import { compile as resolveMessage } from './tags/message'
 import { compile as resolveRef } from './tags/ref'
 import { compile as resolveChainStep } from './tags/step'
+import { compile as resolveScope } from './tags/scope'
 
 async function resolveTagAttributes({
   node: tagNode,
@@ -92,6 +95,11 @@ export async function compile(props: CompileNodeContext<ElementTag>) {
 
   if (isRefTag(node)) {
     await resolveRef(props as CompileNodeContext<ReferenceTag>, attributes)
+    return
+  }
+
+  if (isScopeTag(node)) {
+    await resolveScope(props as CompileNodeContext<ScopeTag>, attributes)
     return
   }
 

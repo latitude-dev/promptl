@@ -129,6 +129,85 @@ describe('hash', async () => {
   })
 })
 
+describe('resolvedPrompt', async () => {
+  it('returns the prompt without comments', async () => {
+    const prompt = `
+      This is a prompt.
+      /* This is a comment */
+      This is another prompt.
+    `
+
+    const metadata = await scan({
+      prompt: removeCommonIndent(prompt),
+    })
+
+    expect(metadata.resolvedPrompt).toBe('This is a prompt.\n\nThis is another prompt.')
+  })
+
+  it('Replaces reference tags with scope tags', async () => {
+    const prompt = removeCommonIndent(`
+      This is a prompt.
+      <prompt path="child" bar={{ foo }} />
+      This is another prompt.
+    `)
+
+    const childPrompt = removeCommonIndent(`
+      <user>
+        This is the referenced prompt.
+        {{ bar }}
+      </user>
+    `)
+
+    const metadata = await scan({
+      prompt,
+      referenceFn: referenceFn({ child: childPrompt }),
+    })
+
+    expect(metadata.resolvedPrompt).toBe(removeCommonIndent(`
+      This is a prompt.
+      <scope bar={{ foo }}><user>
+        This is the referenced prompt.
+        {{ bar }}
+      </user></scope>
+      This is another prompt.
+    `))
+  })
+
+  it('only includes the parent config', async () => {
+    const prompt = removeCommonIndent(`
+      ---
+      config: parent
+      ---
+
+      <prompt path="child" />
+    `)
+
+    const childPrompt = removeCommonIndent(`
+      ---
+      config: child
+      extra: value
+      ---
+
+      This is the child prompt.
+    `)
+
+    const metadata = await scan({
+      prompt,
+      referenceFn: referenceFn({ child: childPrompt }),
+    })
+
+    expect(metadata.resolvedPrompt).toBe(removeCommonIndent(`
+      ---
+      config: parent
+      ---
+
+      <scope >
+      This is the child prompt.</scope>
+    `))
+    expect(metadata.config).toEqual({ config: 'parent' })
+  })
+})
+
 describe('config', async () => {
   it('compiles the YAML written in the config section and returns it as the config attribute in the result', async () => {
     const prompt = `
@@ -444,6 +523,51 @@ describe('referenced prompts', async () => {
     })
 
     expect(metadataWrong.errors.length).toBe(1)
+  })
+})
+
+describe('scope tags', async () => {
+  it('can scan prompts with scope tags', async () => {
+    const prompt = removeCommonIndent(`
+      <scope>
+        This is the prompt.
+      </scope>
+    `)
+
+    const metadata = await scan({ prompt })
+
+    expect(metadata.parameters).toEqual(new Set())
+  })
+
+  it('Does not add parameters from the scope tag to the parent scope', async () => {
+    const prompt = removeCommonIndent(`
+      <scope foo={{ bar }}>
+        {{ foo }}
+      </scope>
+    `)
+
+    const metadata = await scan({ prompt })
+
+    expect(metadata.parameters).toEqual(new Set(['bar']))
+  })
+
+  it('returns an error when the scope tag is trying to use a variable that is not defined', async () => {
+    const prompt = removeCommonIndent(`
+      <scope foo1={{ bar1 }}>
+        {{ foo1 }}
+        {{ foo2 }}
+      </scope>
+    `)
+
+    const metadata = await scan({
+      prompt: removeCommonIndent(prompt),
+    })
+
+    expect(metadata.parameters).toEqual(new Set(['bar1']))
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    const error = metadata.errors[0] as CompileError
+    expect(error.code).toBe('reference-missing-parameter')
   })
 })
 

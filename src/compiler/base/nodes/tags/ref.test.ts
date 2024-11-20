@@ -1,6 +1,6 @@
 import path from 'path'
 
-import { Adapters, Chain, render } from '$promptl/compiler'
+import { Adapters, Chain, render, scan } from '$promptl/compiler'
 import { complete } from '$promptl/compiler/test/helpers'
 import { removeCommonIndent } from '$promptl/compiler/utils'
 import CompileError from '$promptl/error/error'
@@ -284,5 +284,85 @@ describe('ref tags', async () => {
     await complete({ chain })
 
     expect(func).toHaveBeenCalledTimes(3)
+  })
+
+  it('references can be resolved and cached by scanning the document', async () => {
+    const prompts = {
+      parent: removeCommonIndent(`
+        <prompt path="child" />
+      `),
+      child: 'Child message',
+    }
+
+    const metadata = await scan({
+      prompt: prompts['parent'],
+      referenceFn: buildReferenceFn(prompts),
+    })
+
+    const result = await render({
+      prompt: metadata.resolvedPrompt,
+      adapter: Adapters.default,
+    })
+
+    expect(result.messages.length).toBe(1)
+    const message = result.messages[0]! as SystemMessage
+    expect(message.content).toEqual([
+      {
+        type: 'text',
+        text: 'Child message',
+      },
+    ])
+  })
+
+  it('resolved references follow the same rules as regular references', async () => {
+    const func = vi.fn()
+
+    const prompts = {
+      parent: removeCommonIndent(`
+        {{ bar = 10 }}
+
+        <user>
+          <prompt path="child" func={{func}} bar={{bar}} />
+        </user>
+
+        {{ bar }}
+      `),
+      child: removeCommonIndent(`
+        {{ for i in [1, 2, 3] }}
+          {{ bar += 1 }}
+          {{ func() }}
+
+          <content-text>
+          {{ bar }}
+          </content-text>
+        {{ endfor }}
+      `)
+    }
+
+    const metadata = await scan({
+      prompt: prompts['parent'],
+      referenceFn: buildReferenceFn(prompts)
+    })
+
+    const result = await render({
+      prompt: metadata.resolvedPrompt,
+      parameters: { func },
+      adapter: Adapters.default,
+    })
+
+    expect(result.messages.length).toBe(2)
+    const [ firstMessage, secondMessage ] = result.messages as [UserMessage, SystemMessage]
+    expect(firstMessage.role).toBe(MessageRole.user)
+    expect(firstMessage.content.length).toBe(3)
+    expect(firstMessage.content).toEqual([
+      { type: 'text', text: '11'},
+      { type: 'text', text: '12'},
+      { type: 'text', text: '13'},
+    ])
+    expect(secondMessage.role).toBe(MessageRole.system)
+    expect(secondMessage.content.length).toBe(1)
+    expect(secondMessage.content).toEqual([
+      { type: 'text', text: '10' }
+    ])
   })
 })

@@ -46,11 +46,14 @@ export type ContentTag =
   | IElementTag<typeof TAG_NAMES.content>
 
 export type ReferenceTag = IElementTag<typeof TAG_NAMES.prompt>
+export type ScopeTag = IElementTag<typeof TAG_NAMES.scope>
 export type ChainStepTag = IElementTag<typeof TAG_NAMES.step>
 export type ElementTag =
   | ContentTag
   | MessageTag
   | ReferenceTag
+  | ScopeTag
+  | ChainStepTag
   | IElementTag<string>
 
 export type MustacheTag = BaseNode & {
