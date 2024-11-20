@@ -14,6 +14,7 @@ export enum TAG_NAMES {
   image = ContentTypeTagName.image,
   toolCall = ContentTypeTagName.toolCall,
   prompt = 'prompt',
+  scope = 'scope',
   step = 'step',
 }
 
