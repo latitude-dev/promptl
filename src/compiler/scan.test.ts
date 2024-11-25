@@ -640,4 +640,18 @@ describe('syntax errors', async () => {
       `Unexpected closing tag for ${TAG_NAMES.message}`,
     )
   })
+
+  it('allows message tags inside steps', async () => {
+    const prompt = removeCommonIndent(`
+      <step>
+        <user>
+          {{ user_message }}
+        </user>
+      </step>
+    `)
+
+    const metadata = await scan({ prompt })
+
+    expect(metadata.errors.length).toBe(0)
+  })
 })

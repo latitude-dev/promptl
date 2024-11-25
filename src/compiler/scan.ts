@@ -683,7 +683,7 @@ export class Scan {
             node: childNode,
             scopeContext,
             isInsideStepTag: true,
-            isInsideMessageTag: true,
+            isInsideMessageTag,
             isInsideContentTag,
           })
         }
