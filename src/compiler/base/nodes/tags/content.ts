@@ -35,7 +35,7 @@ export async function compile(
       fullPath,
     })
   }
-  const textContent = removeCommonIndent(popStrayText())
+  const textContent = removeCommonIndent(popStrayText().text)
 
   let type: ContentType
   if (node.name === TAG_NAMES.content) {

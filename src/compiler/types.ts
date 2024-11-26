@@ -26,4 +26,5 @@ export type CompileOptions = {
   referenceFn?: ReferencePromptFn
   fullPath?: string
   defaultRole?: MessageRole
+  includeSourceMap?: boolean
 }

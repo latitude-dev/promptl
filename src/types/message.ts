@@ -13,8 +13,15 @@ export enum ContentTypeTagName {
   toolCall = 'tool-call',
 }
 
+export type PromptlSourceRef = {
+  start: number
+  end: number
+  identifier?: string
+}
+
 interface IMessageContent {
   type: ContentType
+  _promptl_source_map?: PromptlSourceRef[]
   [key: string]: unknown
 }
 
