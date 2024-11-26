@@ -56,8 +56,11 @@ export class Chain<M extends AdapterMessageType = Message> {
     this.rawText = prompt
     this.ast = parse(prompt)
     this.scope = new Scope(parameters)
-    this.compileOptions = compileOptions
     this.adapter = adapter
+    this.compileOptions = compileOptions
+    if (this.adapter !== Adapters.default) {
+      this.compileOptions.includeSourceMap = false
+    }
   }
 
   private buildStepResponseContent(

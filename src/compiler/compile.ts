@@ -12,6 +12,7 @@ import {
   Message,
   MessageContent,
   MessageRole,
+  PromptlSourceRef,
   SystemMessage,
 } from '$promptl/types'
 import type { Node as LogicalExpression } from 'estree'
@@ -58,12 +59,19 @@ export class Compile {
   private referenceFn: ReferencePromptFn | undefined
   private globalScope: Scope
   private defaultRole: MessageRole
+  private includeSourceMap: boolean
 
   private messages: Message[] = []
   private globalConfig: Config | undefined
   private stepResponse: MessageContent[] | undefined
 
-  private accumulatedText: string = ''
+  private accumulatedText: {
+    text: string
+    sourceMap: PromptlSourceRef[]
+  } = {
+    text: '',
+    sourceMap: [],
+  }
   private accumulatedContent: {
     node?: TemplateNode
     content: MessageContent
@@ -77,6 +85,7 @@ export class Compile {
     referenceFn,
     fullPath,
     defaultRole = MessageRole.system,
+    includeSourceMap = false,
   }: {
     rawText: string
     globalScope: Scope
@@ -90,6 +99,7 @@ export class Compile {
     this.defaultRole = defaultRole
     this.referenceFn = referenceFn
     this.fullPath = fullPath
+    this.includeSourceMap = includeSourceMap
   }
 
   async run(): Promise<CompilationStatus> {
@@ -139,26 +149,52 @@ export class Compile {
     this.globalConfig = config
   }
 
-  private addStrayText(text: string) {
-    this.accumulatedText += text
+  private getSourceRef(text: string, node: TemplateNode): PromptlSourceRef | undefined {
+    if (node.type !== 'MustacheTag') return undefined
+
+    let sourceRef: PromptlSourceRef = {
+      start: this.accumulatedText.text.length,
+      end: this.accumulatedText.text.length + text.length,
+    }
+
+    switch (node.expression.type) {
+      case 'Identifier':
+        sourceRef.identifier = node.expression.name
+        break;
+      default:
+        break;
+    }
+
+    return sourceRef
   }
 
-  private popStrayText(): string {
-    const text = this.accumulatedText
-    this.accumulatedText = ''
+  private addStrayText(text: string, node: TemplateNode) {
+    const sourceRef = this.getSourceRef(text, node)
+
+    this.accumulatedText.text += text
+    if (sourceRef) this.accumulatedText.sourceMap.push(sourceRef)
+  }
+
+  private popStrayText(): { text: string; sourceMap: PromptlSourceRef[] } {
+    const text = {...this.accumulatedText}
+
+    this.accumulatedText.text = ''
+    this.accumulatedText.sourceMap = []
+
     return text
   }
 
   private groupStrayText(): void {
-    if (this.accumulatedText.trim() !== '') {
-      this.accumulatedContent.push({
-        content: {
-          type: ContentType.text,
-          text: removeCommonIndent(this.accumulatedText).trim(),
-        },
-      })
-    }
-    this.accumulatedText = ''
+    const text = this.popStrayText()
+    if (!text.text.trim().length) return
+
+    this.accumulatedContent.push({
+      content: {
+        type: ContentType.text,
+        text: removeCommonIndent(text.text).trim(),
+        ...(this.includeSourceMap && {_promptlSourceMap: text.sourceMap}),
+      },
+    })
   }
 
   private addContent(item: {

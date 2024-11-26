@@ -5,6 +5,7 @@ import {
   Config,
   Message,
   MessageContent,
+  PromptlSourceRef,
 } from '$promptl/types'
 import type { Node as LogicalExpression } from 'estree'
 
@@ -62,8 +63,8 @@ export type CompileNodeContext<N extends TemplateNode> = {
 
   setConfig: (config: Config) => void
   addMessage: (message: Message, global?: boolean) => void
-  addStrayText: (text: string) => void
-  popStrayText: () => string
+  addStrayText: (text: string, node: TemplateNode) => void
+  popStrayText: () => { text: string; sourceMap: PromptlSourceRef[] }
   groupStrayText: () => void
   addContent: (item: { node?: TemplateNode; content: MessageContent }) => void
   popContent: () => { node?: TemplateNode; content: MessageContent }[]
