@@ -192,7 +192,7 @@ export class Compile {
       content: {
         type: ContentType.text,
         text: removeCommonIndent(text.text).trim(),
-        ...(this.includeSourceMap && {_promptl_source_map: text.sourceMap}),
+        ...(this.includeSourceMap && {_promptlSourceMap: text.sourceMap}),
       },
     })
   }

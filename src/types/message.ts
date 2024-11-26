@@ -21,7 +21,7 @@ export type PromptlSourceRef = {
 
 interface IMessageContent {
   type: ContentType
-  _promptl_source_map?: PromptlSourceRef[]
+  _promptlSourceMap?: PromptlSourceRef[]
   [key: string]: unknown
 }
 
