@@ -15,6 +15,7 @@ export type ConversationMetadata = {
   config: Config
   errors: CompileError[]
   parameters: Set<string> // Variables used in the prompt that have not been defined in runtime
+  isChain: boolean
   setConfig: (config: Config) => string
 }
 

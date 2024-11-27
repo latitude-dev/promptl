@@ -58,6 +58,7 @@ export class Scan {
   private resolvedPrompt: string
   private resolvedPromptOffset: number = 0
   private hasContent: boolean = false
+  private stepTagsCount: number = 0
 
   private accumulatedToolCalls: ContentTag[] = []
   private errors: CompileError[] = []
@@ -160,6 +161,7 @@ export class Scan {
       config: this.config ?? {},
       errors: this.errors,
       setConfig,
+      isChain: this.stepTagsCount > 1,
     }
   }
 
@@ -668,6 +670,7 @@ export class Scan {
       }
 
       if (isChainStepTag(node)) {
+        this.stepTagsCount += 1
         if (isInsideStepTag) {
           this.baseNodeError(errors.stepTagInsideStep, node)
         }
