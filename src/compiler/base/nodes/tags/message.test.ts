@@ -1,4 +1,4 @@
-import { Adapters, render } from '$promptl/compiler'
+import { Adapters, render } from '$promptl/index'
 import { removeCommonIndent } from '$promptl/compiler/utils'
 import { CUSTOM_TAG_END, CUSTOM_TAG_START } from '$promptl/constants'
 import CompileError from '$promptl/error/error'

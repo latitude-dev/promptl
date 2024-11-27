@@ -9,7 +9,7 @@ import {
 } from '$promptl/types'
 import { describe, expect, it } from 'vitest'
 
-import { Adapters, render } from '.'
+import { Adapters, render } from '$promptl/index'
 import { removeCommonIndent } from './utils'
 
 async function getCompiledText(

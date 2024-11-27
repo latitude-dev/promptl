@@ -57,4 +57,4 @@ export function scan({
   }).run()
 }
 
-export { Chain, Adapters, type Document, type ReferencePromptFn }
+export { Chain, type Document, type ReferencePromptFn }

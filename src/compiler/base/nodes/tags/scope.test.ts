@@ -1,4 +1,4 @@
-import { Adapters, Chain, render } from '$promptl/compiler'
+import { Adapters, Chain, render } from '$promptl/index'
 import { complete } from '$promptl/compiler/test/helpers'
 import { removeCommonIndent } from '$promptl/compiler/utils'
 import CompileError from '$promptl/error/error'
