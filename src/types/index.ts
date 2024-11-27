@@ -17,6 +17,7 @@ export type ConversationMetadata = {
   parameters: Set<string> // Variables used in the prompt that have not been defined in runtime
   isChain: boolean
   setConfig: (config: Config) => string
+  includedPromptPaths: Set<string>
 }
 
 export * from './message'
