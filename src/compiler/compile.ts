@@ -33,7 +33,7 @@ import type {
   ReferencePromptFn,
   ResolveBaseNodeProps,
 } from './types'
-import { removeCommonIndent } from './utils'
+import { getCommonIndent, removeCommonIndent } from './utils'
 
 export type CompilationStatus = {
   completed: boolean
@@ -149,7 +149,8 @@ export class Compile {
     this.globalConfig = config
   }
 
-  private getSourceRef(text: string, node: TemplateNode): PromptlSourceRef | undefined {
+  private getSourceRef(text: string, node?: TemplateNode): PromptlSourceRef | undefined {
+    if (!node) return undefined
     if (node.type !== 'MustacheTag') return undefined
 
     let sourceRef: PromptlSourceRef = {
@@ -168,7 +169,7 @@ export class Compile {
     return sourceRef
   }
 
-  private addStrayText(text: string, node: TemplateNode) {
+  private addStrayText(text: string, node?: TemplateNode) {
     const sourceRef = this.getSourceRef(text, node)
 
     this.accumulatedText.text += text
@@ -184,15 +185,53 @@ export class Compile {
     return text
   }
 
+  private outdentSourceRefs(
+    { text, sourceMap }: { text: string; sourceMap: PromptlSourceRef[] }
+  ): PromptlSourceRef[] {
+    const indent = getCommonIndent(text)
+    let position = 0
+    text = text.split('\n').map((line) => {
+      const offset = line.length - line.slice(indent).length
+      line = line.slice(indent)
+      sourceMap = sourceMap.map((ref) => ({
+        ...ref,
+        start: ref.start >= position ? ref.start - offset : ref.start,
+        end: ref.end >= position ? ref.end - offset : ref.end,
+      }))
+      position += line.length + 1
+      return line
+    }).join('\n')
+
+    const offset = text.length - text.trimStart().length
+    text = text.trimStart()
+    sourceMap = sourceMap.map((ref) => ({
+      ...ref,
+      start: ref.start - offset,
+      end: ref.end - offset,
+    }))
+
+    text = text.trimEnd()
+    sourceMap = sourceMap.map((ref) => ({
+      ...ref,
+      start: Math.min(ref.start, text.length),
+      end: Math.min(ref.end, text.length),
+    }))
+ 
+    return sourceMap
+  }
+
   private groupStrayText(): void {
-    const text = this.popStrayText()
-    if (!text.text.trim().length) return
+    const stray = this.popStrayText()
+    const text = removeCommonIndent(stray.text)
+    const sourceMap = this.outdentSourceRefs(stray);
+
+    if (!text.length) return
 
     this.accumulatedContent.push({
       content: {
         type: ContentType.text,
-        text: removeCommonIndent(text.text).trim(),
-        ...(this.includeSourceMap && {_promptlSourceMap: text.sourceMap}),
+        text: text,
+        ...(this.includeSourceMap && {_promptlSourceMap: sourceMap}),
       },
     })
   }
