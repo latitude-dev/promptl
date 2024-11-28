@@ -188,7 +188,8 @@ export class Compile {
   // We should find another way to ensure SourceRefs
   // are in sync, this seems like a hack
   private outdentSourceRefs(
-    { text, sourceMap }: { text: string; sourceMap: PromptlSourceRef[] }
+    text: string,
+    sourceMap: PromptlSourceRef[],
   ): PromptlSourceRef[] {
     const indent = getCommonIndent(text)
     let position = 0
@@ -224,16 +225,13 @@ export class Compile {
 
   private groupStrayText(): void {
     const stray = this.popStrayText()
-    const text = removeCommonIndent(stray.text)
-    const sourceMap = this.outdentSourceRefs(stray);
+    if (!stray.text.length) return
 
-    if (!text.length) return
-
-    this.accumulatedContent.push({
+    this.addContent({
       content: {
         type: ContentType.text,
-        text: text,
-        ...(this.includeSourceMap && {_promptlSourceMap: sourceMap}),
+        text: stray.text,
+        _promptlSourceMap: stray.sourceMap,
       },
     })
   }
@@ -242,7 +240,33 @@ export class Compile {
     node?: TemplateNode
     content: MessageContent
   }): void {
-    this.groupStrayText()
+    switch (item.content.type) {
+      case ContentType.text:
+        item.content._promptlSourceMap = this.outdentSourceRefs(
+          item.content.text,
+          item.content._promptlSourceMap || [],
+        )
+        item.content.text = removeCommonIndent(item.content.text)
+
+        if (!item.content.text.length) return
+        break;
+
+      case ContentType.image:
+        item.content._promptlSourceMap = this.outdentSourceRefs(
+          item.content.image as string,
+          item.content._promptlSourceMap || [],
+        )
+        item.content.image = removeCommonIndent(item.content.image as string)
+
+        if (!item.content.image.length) return
+        break;
+    
+      default:
+        break;
+    }
+
+    if (!this.includeSourceMap) delete (item.content as any)._promptlSourceMap
+
     this.accumulatedContent.push(item)
   }
 
@@ -254,8 +278,8 @@ export class Compile {
 
   private groupContent(): void {
     this.groupStrayText()
-    const contentItems = this.popContent()
 
+    const contentItems = this.popContent()
     if (!contentItems.length) return
 
     const message = {

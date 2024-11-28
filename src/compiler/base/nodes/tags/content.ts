@@ -35,7 +35,6 @@ export async function compile(
       fullPath,
     })
   }
-  const textContent = removeCommonIndent(popStrayText().text)
 
   let type: ContentType
   if (node.name === TAG_NAMES.content) {
@@ -54,13 +53,16 @@ export async function compile(
       ]
   }
 
+  const stray = popStrayText()
+
   if (type === ContentType.text) {
     addContent({
       node,
       content: {
         ...attributes,
         type: ContentType.text,
-        text: textContent,
+        text: stray.text,
+        _promptlSourceMap: stray.sourceMap,
       },
     })
     return
@@ -72,7 +74,8 @@ export async function compile(
       content: {
         ...attributes,
         type: ContentType.image,
-        image: textContent,
+        image: stray.text,
+        _promptlSourceMap: stray.sourceMap,
       },
     })
     return

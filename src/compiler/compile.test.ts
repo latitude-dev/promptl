@@ -785,6 +785,17 @@ Given a context, answer questions succintly yet complete.
   Please, help me
     with {{ question }}!
   </user>
+<user>
+  Is this the real life?
+  
+  <content-text>
+    Is this just fantasy?
+      {{ lyrics }}
+      
+      
+  </content-text>
+<content-image>{{image}}</content-image>
+</user>
 
     {{empty}}{{empty}}
       `;
@@ -793,6 +804,8 @@ Given a context, answer questions succintly yet complete.
         parameters: {
           context: "context",
           question: "question",
+          lyrics: "lyrics",
+          image: "image",
           empty: '   ',
         },
         adapter: Adapters.default,
@@ -836,6 +849,38 @@ Given a context, answer questions succintly yet complete.
                   start: 23,
                   end: 31,
                   identifier: "question",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          role: MessageRole.user,
+          content: [
+            {
+              type: ContentType.text,
+              text: "Is this the real life?",
+              _promptlSourceMap: [],
+            },
+            {
+              type: ContentType.text,
+              text: "Is this just fantasy?\n  lyrics",
+              _promptlSourceMap: [
+                {
+                  start: 24,
+                  end: 30,
+                  identifier: "lyrics",
+                },
+              ],
+            },
+            {
+              type: ContentType.image,
+              image: "image",
+              _promptlSourceMap: [
+                {
+                  start: 0,
+                  end: 5,
+                  identifier: "image",
                 },
               ],
             },
