@@ -1,4 +1,3 @@
-import { removeCommonIndent } from '$promptl/compiler/utils'
 import { CUSTOM_CONTENT_TYPE_ATTR, TAG_NAMES } from '$promptl/constants'
 import errors from '$promptl/error/errors'
 import { ContentTag } from '$promptl/parser/interfaces'
