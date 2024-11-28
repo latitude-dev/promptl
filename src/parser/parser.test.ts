@@ -112,6 +112,21 @@ describe('Tags', async () => {
     expect(node.data).toBe('<custom-tag></custom-tag>')
   })
 
+  it('parses tags with unknown tag names as plain text even if the name starts like a known tag', async () => {
+    const fragment1 = parse('<message-custom></message-custom>')
+    const fragment2 = parse('<messagecustom></messagecustom>')
+    
+    expect(fragment1.children.length).toBe(1)
+    const node1 = fragment1.children[0]!
+    expect(node1.type).toBe('Text')
+    expect(node1.data).toBe('<message-custom></message-custom>')
+    
+    expect(fragment2.children.length).toBe(1)
+    const node2 = fragment2.children[0]!
+    expect(node2.type).toBe('Text')
+    expect(node2.data).toBe('<messagecustom></messagecustom>')
+  })
+
   it('fails if there is no closing tag', async () => {
     const action = () => parse(`<${TAG_NAMES.message}>`)
 

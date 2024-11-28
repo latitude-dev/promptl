@@ -1,6 +1,7 @@
-import { CUSTOM_TAG_START, RESERVED_TAGS } from '$promptl/constants'
+import { CUSTOM_TAG_START } from '$promptl/constants'
 import { type Parser } from '$promptl/parser'
 import type { Text } from '$promptl/parser/interfaces'
+import { RESERVED_TAG_REGEX } from '../utils/regex'
 
 const ENDS_WITH_ESCAPE_REGEX = /(?<!\\)(\\\\)*\\$/
 const RESERVED_DELIMITERS = [CUSTOM_TAG_START, '/*', '<!--']
@@ -21,7 +22,7 @@ export function text(parser: Parser) {
     // Reserved tags
     if (
       !isEscaping &&
-      parser.matchRegex(new RegExp(`^</?(${RESERVED_TAGS.join('|')})`))
+      parser.matchRegex(RESERVED_TAG_REGEX)
     ) {
       break
     }
