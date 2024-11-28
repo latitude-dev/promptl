@@ -29,11 +29,12 @@ export async function render<M extends AdapterMessageType = Message>({
 export function createChain({
   prompt,
   parameters,
+  ...compileOptions
 }: {
   prompt: string
   parameters: Record<string, unknown>
-}): Chain {
-  return new Chain({ prompt, parameters })
+} & CompileOptions): Chain {
+  return new Chain({ prompt, parameters, ...compileOptions })
 }
 
 export function scan({
