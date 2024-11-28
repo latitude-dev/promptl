@@ -55,7 +55,7 @@ export async function compile(
 
   const stray = popStrayText()
 
-  if (type === ContentType.text) {
+  if (type === ContentType.text && stray.text.length > 0) {
     addContent({
       node,
       content: {
@@ -68,7 +68,7 @@ export async function compile(
     return
   }
 
-  if (type === ContentType.image) {
+  if (type === ContentType.image && stray.text.length > 0) {
     addContent({
       node,
       content: {

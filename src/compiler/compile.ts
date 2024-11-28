@@ -176,15 +176,6 @@ export class Compile {
     if (sourceRef) this.accumulatedText.sourceMap.push(sourceRef)
   }
 
-  private popStrayText(): { text: string; sourceMap: PromptlSourceRef[] } {
-    const text = {...this.accumulatedText}
-
-    this.accumulatedText.text = ''
-    this.accumulatedText.sourceMap = []
-
-    return text
-  }
-
   // We should find another way to ensure SourceRefs
   // are in sync, this seems like a hack
   private outdentSourceRefs(
@@ -223,6 +214,19 @@ export class Compile {
     return sourceMap
   }
 
+  private popStrayText(): { text: string; sourceMap: PromptlSourceRef[] } {
+    const sourceMap = this.outdentSourceRefs(
+      this.accumulatedText.text,
+      this.accumulatedText.sourceMap,
+    )
+    const text = removeCommonIndent(this.accumulatedText.text)
+  
+    this.accumulatedText.text = ''
+    this.accumulatedText.sourceMap = []
+
+    return { text, sourceMap }
+  }
+
   private groupStrayText(): void {
     const stray = this.popStrayText()
     if (!stray.text.length) return
@@ -240,33 +244,7 @@ export class Compile {
     node?: TemplateNode
     content: MessageContent
   }): void {
-    switch (item.content.type) {
-      case ContentType.text:
-        item.content._promptlSourceMap = this.outdentSourceRefs(
-          item.content.text,
-          item.content._promptlSourceMap || [],
-        )
-        item.content.text = removeCommonIndent(item.content.text)
-
-        if (!item.content.text.length) return
-        break;
-
-      case ContentType.image:
-        item.content._promptlSourceMap = this.outdentSourceRefs(
-          item.content.image as string,
-          item.content._promptlSourceMap || [],
-        )
-        item.content.image = removeCommonIndent(item.content.image as string)
-
-        if (!item.content.image.length) return
-        break;
-    
-      default:
-        break;
-    }
-
     if (!this.includeSourceMap) delete (item.content as any)._promptlSourceMap
-
     this.accumulatedContent.push(item)
   }
 
