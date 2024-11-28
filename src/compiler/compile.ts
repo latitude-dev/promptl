@@ -185,6 +185,8 @@ export class Compile {
     return text
   }
 
+  // We should find another way to ensure SourceRefs
+  // are in sync, this seems like a hack
   private outdentSourceRefs(
     { text, sourceMap }: { text: string; sourceMap: PromptlSourceRef[] }
   ): PromptlSourceRef[] {
