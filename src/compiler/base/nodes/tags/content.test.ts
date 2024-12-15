@@ -1,8 +1,9 @@
-import { Adapters, render } from '$promptl/index'
 import { removeCommonIndent } from '$promptl/compiler/utils'
 import CompileError from '$promptl/error/error'
+import { Adapters, render } from '$promptl/index'
 import { getExpectedError } from '$promptl/test/helpers'
 import {
+  FileContent,
   ImageContent,
   SystemMessage,
   TextContent,
@@ -34,12 +35,13 @@ describe('content tags', async () => {
     expect((message.content[0] as TextContent).text).toBe('Test user message')
   })
 
-  it('Can add multiple text and image contents inside a message', async () => {
+  it('Can add multiple content types inside a message', async () => {
     const prompt = removeCommonIndent(`
       <user>
         <content-text> Text 1 </content-text>
         <content-image> Image 1 </content-image>
         <content-text> Text 2 </content-text>
+        <content-file mime="text/plain"> File 1 </content-file>
         <content-text> Text 3 </content-text>
       </user>
     `)
@@ -47,15 +49,18 @@ describe('content tags', async () => {
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]! as UserMessage
     expect(message.role).toBe('user')
-    expect(message.content.length).toBe(4)
+    expect(message.content.length).toBe(5)
     expect(message.content[0]!.type).toBe('text')
     expect((message.content[0] as TextContent).text).toBe('Text 1')
     expect(message.content[1]!.type).toBe('image')
     expect((message.content[1] as ImageContent).image).toBe('Image 1')
     expect(message.content[2]!.type).toBe('text')
     expect((message.content[2] as TextContent).text).toBe('Text 2')
-    expect(message.content[3]!.type).toBe('text')
-    expect((message.content[3] as TextContent).text).toBe('Text 3')
+    expect(message.content[3]!.type).toBe('file')
+    expect((message.content[3] as FileContent).file).toBe('File 1')
+    expect((message.content[3] as FileContent).mimeType).toBe('text/plain')
+    expect(message.content[4]!.type).toBe('text')
+    expect((message.content[4] as TextContent).text).toBe('Text 3')
   })
 
   it('Can interpolate stray text and defined content tags', async () => {
@@ -81,16 +86,20 @@ describe('content tags', async () => {
     const prompt = removeCommonIndent(`
       <content type="text"> Text </content>
       <content type="image"> Image </content>
+      <content type="file" mime="text/plain"> File </content>
     `)
     const result = await render({ prompt, adapter: Adapters.default })
 
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]!
-    expect(message.content.length).toBe(2)
+    expect(message.content.length).toBe(3)
     expect(message.content[0]!.type).toBe('text')
     expect((message.content[0] as TextContent).text).toBe('Text')
     expect(message.content[1]!.type).toBe('image')
     expect((message.content[1] as ImageContent).image).toBe('Image')
+    expect(message.content[2]!.type).toBe('file')
+    expect((message.content[2] as FileContent).file).toBe('File')
+    expect((message.content[2] as FileContent).mimeType).toBe('text/plain')
   })
 
   it('Cannot include a content tag inside another content tag', async () => {
@@ -101,6 +110,15 @@ describe('content tags', async () => {
     `)
     const error = await getExpectedError(() => render({ prompt, adapter: Adapters.default }), CompileError)
     expect(error.code).toBe('content-tag-inside-content')
+  })
+
+  it('fails when file content does not have a mime type', async () => {
+    const prompt = removeCommonIndent(`
+      <content-file> File </content-file>
+    `)
+
+    const error = await getExpectedError(() => render({ prompt, adapter: Adapters.default }), CompileError)
+    expect(error.code).toBe('file-tag-without-mime-type')
   })
 })
 

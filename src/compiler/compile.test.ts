@@ -52,6 +52,10 @@ describe('automatic message grouping', async () => {
       <content-image>
         Captain
       </content-image>
+      Jean-Luc
+      <content-file mime="text/plain">
+        Picard
+      </content-file>
       speaking
     `
     const result = await render({ prompt, adapter: Adapters.default })
@@ -60,12 +64,14 @@ describe('automatic message grouping', async () => {
     expect(messages.length).toBe(1)
     const message = messages[0]!
     expect(message.role).toBe(MessageRole.system)
-    expect(message.content.length).toBe(5)
+    expect(message.content.length).toBe(7)
     expect(message.content[0]!.type).toBe(ContentType.text)
     expect(message.content[1]!.type).toBe(ContentType.text)
     expect(message.content[2]!.type).toBe(ContentType.text)
     expect(message.content[3]!.type).toBe(ContentType.image)
     expect(message.content[4]!.type).toBe(ContentType.text)
+    expect(message.content[5]!.type).toBe(ContentType.file)
+    expect(message.content[6]!.type).toBe(ContentType.text)
   })
 
   it('allows defining the default role', async () => {
@@ -795,6 +801,9 @@ Given a context, answer questions succintly yet complete.
       
   </content-text>
 <content-image>{{image}}</content-image>
+<content-file mime="text/plain">
+  {{file}}
+</content-file>
 </user>
 
     {{empty}}{{empty}}
@@ -806,6 +815,7 @@ Given a context, answer questions succintly yet complete.
           question: "question",
           lyrics: "lyrics",
           image: "image",
+          file: "file",
           empty: '   ',
         },
         adapter: Adapters.default,
@@ -881,6 +891,18 @@ Given a context, answer questions succintly yet complete.
                   start: 0,
                   end: 5,
                   identifier: "image",
+                },
+              ],
+            },
+            {
+              type: ContentType.file,
+              file: "file",
+              mimeType: "text/plain",
+              _promptlSourceMap: [
+                {
+                  start: 0,
+                  end: 4,
+                  identifier: "file",
                 },
               ],
             },

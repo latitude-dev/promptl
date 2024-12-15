@@ -157,6 +157,10 @@ export default {
     code: 'content-tag-inside-content',
     message: 'Content tags must be directly inside message tags',
   },
+  fileTagWithoutMimeType: {
+    code: 'file-tag-without-mime-type',
+    message: 'File tags must have a mime type attribute',
+  },
   toolCallTagWithoutId: {
     code: 'tool-call-tag-without-id',
     message: 'Tool call tags must have an id attribute',

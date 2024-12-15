@@ -6,6 +6,7 @@ import { getExpectedError } from '$promptl/test/helpers'
 import {
   AssistantMessage,
   ImageContent,
+  FileContent,
   SystemMessage,
   TextContent,
   UserMessage,
@@ -186,6 +187,7 @@ describe('message contents', async () => {
       <user>
         <content-text>text content</content-text>
         <content-image>image content</content-image>
+        <content-file mime="text/plain">file content</content-file>
         <content-text>another text content</content-text>
       </user>
     `
@@ -197,15 +199,20 @@ describe('message contents', async () => {
 
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]! as UserMessage
-    expect(message.content.length).toBe(3)
+    expect(message.content.length).toBe(4)
+
     expect(message.content[0]!.type).toBe('text')
     expect((message.content[0]! as TextContent).text).toBe('text content')
 
     expect(message.content[1]!.type).toBe('image')
     expect((message.content[1]! as ImageContent).image).toBe('image content')
 
-    expect(message.content[2]!.type).toBe('text')
-    expect((message.content[2]! as TextContent).text).toBe(
+    expect(message.content[2]!.type).toBe('file')
+    expect((message.content[2]! as FileContent).file).toBe('file content')
+    expect((message.content[2]! as FileContent).mimeType).toBe('text/plain')
+
+    expect(message.content[3]!.type).toBe('text')
+    expect((message.content[3]! as TextContent).text).toBe(
       'another text content',
     )
   })
