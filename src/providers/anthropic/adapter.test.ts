@@ -31,6 +31,8 @@ describe('Anthropic adapter', async () => {
       <user>
         Hello world!
         <content-image>https://image.source/</content-image>
+        <content-file mime="text/plain">text content</content-file>
+        <content-file mime="application/pdf">pdf content</content-file>
       </user>
     `)
 
@@ -46,6 +48,15 @@ describe('Anthropic adapter', async () => {
               type: 'base64',
               media_type: 'image/png',
               data: 'https://image.source/',
+            },
+          },
+          { type: 'text', text: 'text content' },
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: 'pdf content',
             },
           },
         ],

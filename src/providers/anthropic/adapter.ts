@@ -3,6 +3,7 @@ import {
   MessageRole,
   Conversation as PromptlConversation,
   ImageContent as PromptlImageContent,
+  FileContent as PromptlFileContent,
   Message as PromptlMessage,
   MessageContent as PromptlMessageContent,
   SystemMessage as PromptlSystemMessage,
@@ -17,6 +18,7 @@ import {
   AssistantMessage as AnthropicAssistantMessage,
   ContentType as AnthropicContentType,
   ImageContent as AnthropicImageContent,
+  DocumentContent as AnthropicDocumentContent,
   Message as AnthropicMessage,
   MessageContent as AnthropicMessageContent,
   TextContent as AnthropicTextContent,
@@ -86,7 +88,7 @@ export const AnthropicAdapter: ProviderAdapter<AnthropicMessage> = {
         system:
           | undefined
           | string
-          | (AnthropicImageContent | AnthropicTextContent)[]
+          | (AnthropicTextContent | AnthropicImageContent | AnthropicDocumentContent)[]
         [key: string]: unknown
       }
 
@@ -98,6 +100,9 @@ export const AnthropicAdapter: ProviderAdapter<AnthropicMessage> = {
               ? systemPrompt.map((c) => {
                   if (c.type === AnthropicContentType.image) {
                     return toPromptlImage(c)
+                  }
+                  if (c.type === AnthropicContentType.document) {
+                    return toPromptlFile(c)
                   }
                   return c as unknown as PromptlMessageContent
                 })
@@ -142,6 +147,44 @@ function toPromptlImage(
   }
 }
 
+function toAnthropicFile(
+ fileContent: PromptlFileContent,
+): AnthropicTextContent | AnthropicDocumentContent {
+  const { file, mimeType, ...rest } = fileContent
+
+  // only available type for now
+  if (mimeType === 'application/pdf') {
+    return {
+      ...rest,
+      type: AnthropicContentType.document,
+      source: {
+        type: 'base64', 
+        media_type: mimeType,
+        data: file.toString('base64'),
+      },
+    } 
+  }
+
+  return {
+    ...rest,
+    type: AnthropicContentType.text,
+    text: file.toString(),
+  }
+}
+
+function toPromptlFile(
+  fileContent: AnthropicDocumentContent,
+): PromptlFileContent {
+  const { source, ...rest } = fileContent
+
+  return {
+    ...rest,
+    type: ContentType.file,
+    file: source.data,
+    mimeType: source.media_type,
+  }
+}
+
 function promptlToAnthropic(message: PromptlMessage): AnthropicMessage {
   if (message.role === MessageRole.system) {
     throw new Error(
@@ -153,6 +196,7 @@ function promptlToAnthropic(message: PromptlMessage): AnthropicMessage {
     const { content, ...rest } = message
     const adaptedContent = content.map((c) => {
       if (c.type === ContentType.image) return toAnthropicImage(c)
+      if (c.type === ContentType.file) return toAnthropicFile(c)
       return c
     })
 
@@ -167,6 +211,7 @@ function promptlToAnthropic(message: PromptlMessage): AnthropicMessage {
 
     const adaptedContent = content.map((c) => {
       if (c.type === ContentType.image) return toAnthropicImage(c)
+      if (c.type === ContentType.file) return toAnthropicFile(c)
       if (c.type === ContentType.toolCall) {
         return {
           type: AnthropicContentType.tool_use,
@@ -188,6 +233,7 @@ function promptlToAnthropic(message: PromptlMessage): AnthropicMessage {
     const { toolId, content, ...rest } = message
     const adaptedContent = content.map((c) => {
       if (c.type === ContentType.image) return toAnthropicImage(c)
+      if (c.type === ContentType.file) return toAnthropicFile(c)
       return c
     })
     return {
@@ -219,6 +265,7 @@ function anthropicToPromptl(message: AnthropicMessage): PromptlMessage[] {
         ...message,
         content: messageContent.map((c) => {
           if (c.type === AnthropicContentType.image) return toPromptlImage(c)
+          if (c.type === AnthropicContentType.document) return toPromptlFile(c)
           if (c.type === AnthropicContentType.tool_use) {
             return {
               type: ContentType.toolCall,
@@ -264,7 +311,14 @@ function anthropicToPromptl(message: AnthropicMessage): PromptlMessage[] {
             toolId: c.tool_use_id,
             content: toolResponseContent,
           })
-        } else {
+        }
+        else if (c.type === AnthropicContentType.image) {
+          acc.userMessage.content.push(toPromptlImage(c))
+        }
+        else if (c.type === AnthropicContentType.document) {
+          acc.userMessage.content.push(toPromptlFile(c))
+        }
+        else {
           acc.userMessage.content.push(c as unknown as PromptlMessageContent)
         }
         return acc
