@@ -6,16 +6,20 @@ import {
   Message as PromptlMessage,
   TextContent,
   ToolCallContent,
+  FileContent,
 } from '$promptl/types'
 
 import { ProviderAdapter, type ProviderConversation } from '../adapter'
 import {
   AssistantMessage as OpenAIAssistantMessage,
+  UserMessage as OpenAIUserMessage,
   Message as OpenAIMessage,
   SystemMessage as OpenAISystemMessage,
   TextContent as OpenAITextContent,
   ToolCall as OpenAIToolCall,
   ToolMessage as OpenAIToolMessage,
+  AudioContent as OpenAIAudioContent,
+  ContentType as OpenAIContentType,
 } from './types'
 
 export const OpenAIAdapter: ProviderAdapter<OpenAIMessage> = {
@@ -36,6 +40,41 @@ export const OpenAIAdapter: ProviderAdapter<OpenAIMessage> = {
       messages: openAiConversation.messages.map(openAiToPromptl),
     }
   },
+}
+
+function toOpenAiFile(
+  fileContent: FileContent,
+): OpenAITextContent | OpenAIAudioContent {
+  const { file, mimeType, ...rest } = fileContent
+
+  // only available types for now
+  if (mimeType === 'audio/mpeg' || mimeType === 'audio/wav') {
+    return {
+      ...rest,
+      type: OpenAIContentType.input_audio,
+      data: file.toString('base64'),
+      format: mimeType.split('/').at(-1)!,
+    } 
+  }
+
+  return {
+    ...rest,
+    type: OpenAIContentType.text,
+    text: file.toString(),
+  }
+}
+
+function toPromptlFile(
+  fileContent: OpenAIAudioContent,
+): FileContent {
+  const { data, format, ...rest } = fileContent
+
+  return {
+    ...rest,
+    type: ContentType.file,
+    file: data,
+    mimeType: `audio/${format}`,
+  }
 }
 
 function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
@@ -59,13 +98,19 @@ function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
 
   if (message.role === MessageRole.user) {
     const { content, ...rest } = message
+
     if (content.some((c) => !Object.values(ContentType).includes(c.type))) {
       throw new Error(
         `Unsupported content type for user message: ${content.map((c) => c.type).join(', ')}`,
       )
     }
 
-    return { ...rest, content: content as unknown as OpenAITextContent[] }
+    const adaptedContent = content.map((c) => {
+      if (c.type === ContentType.file) return toOpenAiFile(c)
+      return c
+    })
+
+    return { ...rest, content: adaptedContent } as OpenAIUserMessage
   }
 
   if (message.role === MessageRole.assistant) {
@@ -120,10 +165,15 @@ function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
 }
 
 function openAiToPromptl(message: OpenAIMessage): PromptlMessage {
-  const content: MessageContent[] =
-    typeof message.content === 'string'
-      ? [{ type: ContentType.text, text: message.content as string }]
-      : (message.content as unknown as MessageContent[])
+  const content: MessageContent[] = []
+  if (typeof message.content === 'string') {
+    content.push({ type: ContentType.text, text: message.content })
+  } else {
+    content.push(...message.content.map((c) => {
+      if (c.type === OpenAIContentType.input_audio) return toPromptlFile(c)
+      return c as unknown as MessageContent
+    }))
+  }
 
   if (message.role === MessageRole.assistant) {
     const toolCalls: OpenAIToolCall[] = message.tool_calls || []

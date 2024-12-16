@@ -23,6 +23,8 @@ describe('OpenAI adapter', async () => {
       <user name="Image master">
         Hello world!
         <content-image>https://image.source/</content-image>
+        <content-file mime="text/plain">text content</content-file>
+        <content-file mime="audio/wav">audio content</content-file>
       </user>
     `)
 
@@ -34,6 +36,12 @@ describe('OpenAI adapter', async () => {
         content: [
           { type: 'text', text: 'Hello world!' },
           { type: 'image', image: 'https://image.source/' },
+          { type: 'text', text: 'text content' },
+          {
+            type: 'input_audio',
+            data: 'audio content',
+            format: 'wav',
+          },
         ],
       },
     ])

@@ -3,6 +3,7 @@
 export enum ContentType {
   text = 'text',
   image = 'image',
+  file = 'file',
   toolCall = 'tool-call',
 }
 
@@ -10,6 +11,7 @@ export enum ContentTypeTagName {
   // This is used to translate between the tag name and the actual tag value
   text = 'content-text',
   image = 'content-image',
+  file = 'content-file',
   toolCall = 'tool-call',
 }
 
@@ -35,6 +37,12 @@ export type ImageContent = IMessageContent & {
   image: string | Uint8Array | Buffer | ArrayBuffer | URL
 }
 
+export type FileContent = IMessageContent & {
+  type: ContentType.file
+  file: string | Uint8Array | Buffer | ArrayBuffer | URL
+  mimeType: string
+}
+
 export type ToolCallContent = {
   type: ContentType.toolCall
   toolCallId: string
@@ -42,7 +50,7 @@ export type ToolCallContent = {
   toolArguments: Record<string, unknown>
 }
 
-export type MessageContent = TextContent | ImageContent | ToolCallContent
+export type MessageContent = TextContent | ImageContent | FileContent | ToolCallContent
 
 /* Message */
 

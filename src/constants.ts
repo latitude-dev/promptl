@@ -12,6 +12,7 @@ export enum TAG_NAMES {
   content = 'content',
   text = ContentTypeTagName.text,
   image = ContentTypeTagName.image,
+  file = ContentTypeTagName.file,
   toolCall = ContentTypeTagName.toolCall,
   prompt = 'prompt',
   scope = 'scope',

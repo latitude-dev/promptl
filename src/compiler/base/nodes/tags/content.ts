@@ -80,6 +80,23 @@ export async function compile(
     return
   }
 
+  if (type === ContentType.file && stray.text.length > 0) {
+    const { mime: mimeType, ...rest } = attributes
+    if (!mimeType) baseNodeError(errors.fileTagWithoutMimeType, node)
+
+    addContent({
+      node,
+      content: {
+        ...rest,
+        type: ContentType.file,
+        file: stray.text,
+        mimeType: String(mimeType),
+        _promptlSourceMap: stray.sourceMap,
+      },
+    })
+    return
+  }
+
   if (type == ContentType.toolCall) {
     const { id, name, ...rest } = attributes
     if (!id) baseNodeError(errors.toolCallTagWithoutId, node)
