@@ -56,15 +56,6 @@ export async function compile(
     stop(config as Config)
   }
 
-  // The step has already been process, this is the continuation of the chain.
-  if ('as' in attributes) {
-    if (!tagAttributeIsLiteral(node, 'as')) {
-      baseNodeError(errors.invalidStaticAttribute('as'), node)
-    }
-
-    scope.set(String(textVarName), stepResponse)
-  }
-
   if ('raw' in attributes) {
     if (!tagAttributeIsLiteral(node, 'raw')) {
       baseNodeError(errors.invalidStaticAttribute('raw'), node)
@@ -80,7 +71,12 @@ export async function compile(
     }
 
     const textVarValue = (stepResponse?.content ?? []).filter(c => c.type === ContentType.text).map(c => c.text).join('')
-    scope.set(String(textVarName), textVarValue)
+
+    if ("schema" in config) {
+      scope.set(String(textVarName), JSON.parse(textVarValue.trim()))
+    } else {
+      scope.set(String(textVarName), textVarValue)
+    }
   }
 
   groupContent()
