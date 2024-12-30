@@ -33,7 +33,7 @@ export async function compile(
 
   const stepResponse = popStepResponse()
 
-  const { as: textVarName, raw: messageVarName, ...config } = attributes
+  const { as: responseVarName, raw: messageVarName, ...config } = attributes
 
   // The step must be processed.
   if (stepResponse === undefined) {
@@ -57,13 +57,6 @@ export async function compile(
   }
 
   // The step has already been process, this is the continuation of the chain.
-  if ('as' in attributes) {
-    if (!tagAttributeIsLiteral(node, 'as')) {
-      baseNodeError(errors.invalidStaticAttribute('as'), node)
-    }
-
-    scope.set(String(textVarName), stepResponse)
-  }
 
   if ('raw' in attributes) {
     if (!tagAttributeIsLiteral(node, 'raw')) {
@@ -73,14 +66,23 @@ export async function compile(
     scope.set(String(messageVarName), stepResponse)
   }
 
-  // The step has already been process, this is the continuation of the chain.
   if ('as' in attributes) {
     if (!tagAttributeIsLiteral(node, 'as')) {
       baseNodeError(errors.invalidStaticAttribute('as'), node)
     }
 
-    const textVarValue = (stepResponse?.content ?? []).filter(c => c.type === ContentType.text).map(c => c.text).join('')
-    scope.set(String(textVarName), textVarValue)
+    const textResponse = (stepResponse?.content ?? []).filter(c => c.type === ContentType.text).map(c => c.text).join('')
+    let responseVarValue = textResponse
+
+    if ("schema" in config) {
+      try {
+        responseVarValue = JSON.parse(responseVarValue.trim())
+      } catch (error) {
+        baseNodeError(errors.functionCallError(error), node)
+      }
+    }
+
+    scope.set(String(responseVarName), responseVarValue)
   }
 
   groupContent()
