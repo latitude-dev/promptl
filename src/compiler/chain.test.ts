@@ -36,7 +36,7 @@ describe('chain', async () => {
     const chain = new Chain({
       prompt: removeCommonIndent(prompt),
       parameters: {},
-      adapter: Adapters.default
+      adapter: Adapters.default,
     })
     const { steps, messages } = await complete({ chain })
     expect(steps).toBe(1)
@@ -173,9 +173,7 @@ describe('chain', async () => {
     const chain = new Chain({ prompt, adapter: Adapters.default })
     const { steps, messages } = await complete({ chain })
     expect(steps).toBe(3)
-    const stepMessages = messages.filter(
-      (m) => m.role === MessageRole.system,
-    )
+    const stepMessages = messages.filter((m) => m.role === MessageRole.system)
     expect(stepMessages.length).toBe(3)
     expect((stepMessages[0]!.content[0] as TextContent).text).toBe('Step 1')
     expect((stepMessages[1]!.content[0] as TextContent).text).toBe('Step 3')
@@ -199,9 +197,7 @@ describe('chain', async () => {
     const { steps, messages } = await complete({ chain })
     expect(steps).toBe(1)
     expect(messages.length).toBe(2)
-    expect((messages[0]!.content[0] as TextContent).text).toBe(
-      'Step 1',
-    )
+    expect((messages[0]!.content[0] as TextContent).text).toBe('Step 1')
   })
 
   it('isolated steps do not include previous messages', async () => {
@@ -268,7 +264,7 @@ describe('chain', async () => {
         func1,
         func2,
       },
-      adapter: Adapters.default
+      adapter: Adapters.default,
     })
 
     const { messages } = await complete({ chain })
@@ -360,7 +356,10 @@ describe('chain', async () => {
       {{bar}}
     `)
 
-    const correctChain = new Chain({ prompt: correctPrompt, adapter: Adapters.default })
+    const correctChain = new Chain({
+      prompt: correctPrompt,
+      adapter: Adapters.default,
+    })
     const { messages } = await complete({ chain: correctChain })
 
     expect(messages[messages.length - 2]!).toEqual({
@@ -376,7 +375,7 @@ describe('chain', async () => {
     const incorrectChain = new Chain({
       prompt: incorrectPrompt,
       parameters: {},
-      adapter: Adapters.default
+      adapter: Adapters.default,
     })
 
     const action = () => complete({ chain: incorrectChain })
@@ -389,7 +388,7 @@ describe('chain', async () => {
       {{ foo = 0 }}
 
       {{for element in [1, 2, 3]}}
-      
+
         <step>
           <user>
             {{foo}}
@@ -406,15 +405,9 @@ describe('chain', async () => {
 
     const { messages } = await complete({ chain, maxSteps: 6 })
     expect(messages.length).toBe(8)
-    expect((messages[0]!.content[0]! as TextContent).text).toBe(
-      '0',
-    )
-    expect((messages[2]!.content[0]! as TextContent).text).toBe(
-      '1',
-    )
-    expect((messages[4]!.content[0]! as TextContent).text).toBe(
-      '2',
-    )
+    expect((messages[0]!.content[0]! as TextContent).text).toBe('0')
+    expect((messages[2]!.content[0]! as TextContent).text).toBe('1')
+    expect((messages[4]!.content[0]! as TextContent).text).toBe('2')
     expect(messages[6]).toEqual({
       role: MessageRole.system,
       content: [
@@ -466,9 +459,7 @@ describe('chain', async () => {
     const chain = new Chain({ prompt, adapter: Adapters.default })
 
     const { messages } = await complete({ chain })
-    const userMessages = messages.filter(
-      (m) => m.role === MessageRole.user,
-    )
+    const userMessages = messages.filter((m) => m.role === MessageRole.user)
     const userMessageText = userMessages
       .map((m) => m.content.map((c) => (c as TextContent).text).join(' '))
       .join('\n')
@@ -500,7 +491,7 @@ describe('chain', async () => {
   it('saves the response in a variable', async () => {
     const prompt = removeCommonIndent(`
       <${TAG_NAMES.step} raw="rawResponse" as="responseText"/>
-      
+
       <user>
         {{rawResponse}}
       </user>
@@ -558,5 +549,32 @@ describe('chain', async () => {
     const finalConversation = await chain.step('')
     expect(finalConversation.config.model).toBe('foo-1')
     expect(finalConversation.config.temperature).toBe(0.5)
+  })
+})
+
+describe('chain global messages count', async () => {
+  it('display messages count', async () => {
+    const prompt = removeCommonIndent(`
+      {{ foo = 'foo' }}
+      System message
+
+      {{for element in [1, 2, 3]}}
+        <user>
+          User message: {{element}}
+        </user>
+      {{endfor}}
+
+      <assistant>
+        Assistant message: {{foo}}
+      </assistant>
+    `)
+
+    const chain = new Chain({
+      prompt: removeCommonIndent(prompt),
+      parameters: {},
+      adapter: Adapters.default,
+    })
+    await complete({ chain })
+    expect(chain.globalMessagesCount).toBe(6)
   })
 })

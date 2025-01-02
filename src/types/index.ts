@@ -20,4 +20,5 @@ export type ConversationMetadata = {
   includedPromptPaths: Set<string>
 }
 
+export { type SerializedChain } from '$promptl/compiler'
 export * from './message'

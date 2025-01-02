@@ -50,7 +50,11 @@ export type ToolCallContent = {
   toolArguments: Record<string, unknown>
 }
 
-export type MessageContent = TextContent | ImageContent | FileContent | ToolCallContent
+export type MessageContent =
+  | TextContent
+  | ImageContent
+  | FileContent
+  | ToolCallContent
 
 /* Message */
 

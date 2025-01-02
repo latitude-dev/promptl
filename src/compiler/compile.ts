@@ -149,7 +149,10 @@ export class Compile {
     this.globalConfig = config
   }
 
-  private getSourceRef(text: string, node?: TemplateNode): PromptlSourceRef | undefined {
+  private getSourceRef(
+    text: string,
+    node?: TemplateNode,
+  ): PromptlSourceRef | undefined {
     if (!node) return undefined
     if (node.type !== 'MustacheTag') return undefined
 
@@ -161,9 +164,9 @@ export class Compile {
     switch (node.expression.type) {
       case 'Identifier':
         sourceRef.identifier = node.expression.name
-        break;
+        break
       default:
-        break;
+        break
     }
 
     return sourceRef
@@ -184,17 +187,20 @@ export class Compile {
   ): PromptlSourceRef[] {
     const indent = getCommonIndent(text)
     let position = 0
-    text = text.split('\n').map((line) => {
-      const offset = line.length - line.slice(indent).length
-      line = line.slice(indent)
-      sourceMap = sourceMap.map((ref) => ({
-        ...ref,
-        start: ref.start >= position ? ref.start - offset : ref.start,
-        end: ref.end >= position ? ref.end - offset : ref.end,
-      }))
-      position += line.length + 1
-      return line
-    }).join('\n')
+    text = text
+      .split('\n')
+      .map((line) => {
+        const offset = line.length - line.slice(indent).length
+        line = line.slice(indent)
+        sourceMap = sourceMap.map((ref) => ({
+          ...ref,
+          start: ref.start >= position ? ref.start - offset : ref.start,
+          end: ref.end >= position ? ref.end - offset : ref.end,
+        }))
+        position += line.length + 1
+        return line
+      })
+      .join('\n')
 
     const offset = text.length - text.trimStart().length
     text = text.trimStart()
@@ -210,7 +216,7 @@ export class Compile {
       start: Math.min(ref.start, text.length),
       end: Math.min(ref.end, text.length),
     }))
- 
+
     return sourceMap
   }
 
@@ -220,7 +226,7 @@ export class Compile {
       this.accumulatedText.sourceMap,
     )
     const text = removeCommonIndent(this.accumulatedText.text)
-  
+
     this.accumulatedText.text = ''
     this.accumulatedText.sourceMap = []
 
