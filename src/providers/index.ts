@@ -10,6 +10,7 @@ export const Adapters = {
   anthropic: AnthropicAdapter,
 } as const
 
+export type AdapterKey = keyof typeof Adapters
 export type AdapterMessageType<
   T extends keyof typeof Adapters = keyof typeof Adapters,
 > = ReturnType<(typeof Adapters)[T]['fromPromptl']>['messages'][number]

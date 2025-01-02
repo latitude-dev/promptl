@@ -107,7 +107,7 @@ export async function compile(
     if (toolArguments && typeof toolArguments === 'string') {
       try {
         rest['arguments'] = JSON.parse(toolArguments)
-      } catch (e) {
+      } catch {
         baseNodeError(errors.invalidToolCallArguments, node)
       }
     }

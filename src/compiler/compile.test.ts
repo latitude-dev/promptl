@@ -76,7 +76,11 @@ describe('automatic message grouping', async () => {
 
   it('allows defining the default role', async () => {
     const prompt = 'Hello world!'
-    const result = await render({ prompt, defaultRole: MessageRole.user, adapter: Adapters.default })
+    const result = await render({
+      prompt,
+      defaultRole: MessageRole.user,
+      adapter: Adapters.default,
+    })
     const message = result.messages[0]!
     expect(message.role).toBe(MessageRole.user)
   })
@@ -463,87 +467,96 @@ describe('operators', async () => {
   })
 })
 
-describe("source map", async () => {
-  it("does not include source map when not specified", async () => {
+describe('source map', async () => {
+  it('does not include source map when not specified', async () => {
     const prompt = `
 Given a context, answer questions succintly yet complete.
 <system>{{ context }}</system>
 <user>Please, help me with {{ question }}!</user>
-    `;
+    `
     const { messages } = await render({
       prompt,
       parameters: {
-        context: "context",
-        question: "question",
+        context: 'context',
+        question: 'question',
       },
       adapter: Adapters.default,
-    });
+    })
     expect(messages).toEqual([
       {
         role: MessageRole.system,
-        content: [{ type: ContentType.text, text: "Given a context, answer questions succintly yet complete." }],
+        content: [
+          {
+            type: ContentType.text,
+            text: 'Given a context, answer questions succintly yet complete.',
+          },
+        ],
       },
       {
         role: MessageRole.system,
-        content: [{ type: ContentType.text, text: "context" }],
+        content: [{ type: ContentType.text, text: 'context' }],
       },
       {
         role: MessageRole.user,
-        content: [{ type: ContentType.text, text: "Please, help me with question!" }],
+        content: [
+          { type: ContentType.text, text: 'Please, help me with question!' },
+        ],
       },
-    ]);
-  });
+    ])
+  })
 
-  it("does not include source map when non-default adapter", async () => {
+  it('does not include source map when non-default adapter', async () => {
     const prompt = `
 Given a context, answer questions succintly yet complete.
 <system>{{ context }}</system>
 <user>Please, help me with {{ question }}!</user>
-    `;
+    `
     const { messages } = await render({
       prompt,
       parameters: {
-        context: "context",
-        question: "question",
+        context: 'context',
+        question: 'question',
       },
       adapter: Adapters.openai,
       includeSourceMap: true,
-    });
+    })
     expect(messages).toEqual([
       {
         role: MessageRole.system,
-        content: "Given a context, answer questions succintly yet complete.",
+        content: 'Given a context, answer questions succintly yet complete.',
       },
       {
         role: MessageRole.system,
-        content: "context",
+        content: 'context',
       },
       {
         role: MessageRole.user,
-        content: [{ type: ContentType.text, text: "Please, help me with question!" }],
+        content: [
+          { type: ContentType.text, text: 'Please, help me with question!' },
+        ],
       },
-    ]);
-  });
+    ])
+  })
 
-  describe("includes source map when specified", async () => {
-    it("returns empty source map when no identifiers", async () => {
+  describe('includes source map when specified', async () => {
+    it('returns empty source map when no identifiers', async () => {
       const prompt = `
 Given a context, answer questions succintly yet complete.
 <system>context</system>
 <user>Please, help me with question!</user>
-      `;
+      `
       const { messages } = await render({
         prompt,
         adapter: Adapters.default,
         includeSourceMap: true,
-      });
+      })
       expect(messages).toEqual([
         {
           role: MessageRole.system,
           content: [
             {
               type: ContentType.text,
-              text: "Given a context, answer questions succintly yet complete.",
+              text: 'Given a context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
@@ -553,7 +566,7 @@ Given a context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "context",
+              text: 'context',
               _promptlSourceMap: [],
             },
           ],
@@ -563,36 +576,36 @@ Given a context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "Please, help me with question!",
+              text: 'Please, help me with question!',
               _promptlSourceMap: [],
             },
           ],
         },
-      ]);
-    });
+      ])
+    })
 
-    it("returns source map when single identifiers per content", async () => {
+    it('returns source map when single identifiers per content', async () => {
       const prompt = `
 Given a context, answer questions succintly yet complete.
 <system>{{ context }}</system>
 <user>Please, help me with {{ question }}!</user>
-      `;
+      `
       const { messages } = await render({
         prompt,
         parameters: {
-          context: "context",
-          question: "question",
+          context: 'context',
+          question: 'question',
         },
         adapter: Adapters.default,
         includeSourceMap: true,
-      });
+      })
       expect(messages).toEqual([
         {
           role: MessageRole.system,
           content: [
             {
               type: ContentType.text,
-              text: "Given a context, answer questions succintly yet complete.",
+              text: 'Given a context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
@@ -602,12 +615,12 @@ Given a context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "context",
+              text: 'context',
               _promptlSourceMap: [
                 {
                   start: 0,
                   end: 7,
-                  identifier: "context",
+                  identifier: 'context',
                 },
               ],
             },
@@ -618,44 +631,44 @@ Given a context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "Please, help me with question!",
+              text: 'Please, help me with question!',
               _promptlSourceMap: [
                 {
                   start: 21,
                   end: 29,
-                  identifier: "question",
+                  identifier: 'question',
                 },
               ],
             },
           ],
         },
-      ]);
-    });
+      ])
+    })
 
-    it("returns source map when multiple identifiers per content", async () => {
+    it('returns source map when multiple identifiers per content', async () => {
       const prompt = `
 Given some context, answer questions succintly yet complete.
 <system>{{ context_1 }} and {{ context_2 }}</system>
 <user>Please, help me with {{ question_1 }} and {{ question_2 }}!</user>
-      `;
+      `
       const { messages } = await render({
         prompt,
         parameters: {
-          context_1: "context_1",
-          context_2: "context_2",
-          question_1: "question_1",
-          question_2: "question_2",
+          context_1: 'context_1',
+          context_2: 'context_2',
+          question_1: 'question_1',
+          question_2: 'question_2',
         },
         adapter: Adapters.default,
         includeSourceMap: true,
-      });
+      })
       expect(messages).toEqual([
         {
           role: MessageRole.system,
           content: [
             {
               type: ContentType.text,
-              text: "Given some context, answer questions succintly yet complete.",
+              text: 'Given some context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
@@ -665,17 +678,17 @@ Given some context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "context_1 and context_2",
+              text: 'context_1 and context_2',
               _promptlSourceMap: [
                 {
                   start: 0,
                   end: 9,
-                  identifier: "context_1",
+                  identifier: 'context_1',
                 },
                 {
                   start: 14,
                   end: 23,
-                  identifier: "context_2",
+                  identifier: 'context_2',
                 },
               ],
             },
@@ -686,47 +699,47 @@ Given some context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "Please, help me with question_1 and question_2!",
+              text: 'Please, help me with question_1 and question_2!',
               _promptlSourceMap: [
                 {
                   start: 21,
                   end: 31,
-                  identifier: "question_1",
+                  identifier: 'question_1',
                 },
                 {
                   start: 36,
                   end: 46,
-                  identifier: "question_2",
+                  identifier: 'question_2',
                 },
               ],
             },
           ],
         },
-      ]);
-    });
+      ])
+    })
 
-    it("returns source map when duplicated identifiers", async () => {
+    it('returns source map when duplicated identifiers', async () => {
       const prompt = `
 Given a context, answer questions succintly yet complete.
 <system>{{ context }} and {{ context }}</system>
 <user>Please, help me with {{ question }} and {{ question }}!</user>
-      `;
+      `
       const { messages } = await render({
         prompt,
         parameters: {
-          context: "context",
-          question: "question",
+          context: 'context',
+          question: 'question',
         },
         adapter: Adapters.default,
         includeSourceMap: true,
-      });
+      })
       expect(messages).toEqual([
         {
           role: MessageRole.system,
           content: [
             {
               type: ContentType.text,
-              text: "Given a context, answer questions succintly yet complete.",
+              text: 'Given a context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
@@ -736,17 +749,17 @@ Given a context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "context and context",
+              text: 'context and context',
               _promptlSourceMap: [
                 {
                   start: 0,
                   end: 7,
-                  identifier: "context",
+                  identifier: 'context',
                 },
                 {
                   start: 12,
                   end: 19,
-                  identifier: "context",
+                  identifier: 'context',
                 },
               ],
             },
@@ -757,26 +770,26 @@ Given a context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "Please, help me with question and question!",
+              text: 'Please, help me with question and question!',
               _promptlSourceMap: [
                 {
                   start: 21,
                   end: 29,
-                  identifier: "question",
+                  identifier: 'question',
                 },
                 {
                   start: 34,
                   end: 42,
-                  identifier: "question",
+                  identifier: 'question',
                 },
               ],
             },
           ],
         },
-      ]);
-    });
+      ])
+    })
 
-    it("returns source map when multiple new lines and indents", async () => {
+    it('returns source map when multiple new lines and indents', async () => {
       const prompt = `
   Given a context, answer questions succintly yet complete.
   <system>
@@ -807,27 +820,27 @@ Given a context, answer questions succintly yet complete.
 </user>
 
     {{empty}}{{empty}}
-      `;
+      `
       const { messages } = await render({
         prompt,
         parameters: {
-          context: "context",
-          question: "question",
-          lyrics: "lyrics",
-          image: "image",
-          file: "file",
+          context: 'context',
+          question: 'question',
+          lyrics: 'lyrics',
+          image: 'image',
+          file: 'file',
           empty: '   ',
         },
         adapter: Adapters.default,
         includeSourceMap: true,
-      });
+      })
       expect(messages).toEqual([
         {
           role: MessageRole.system,
           content: [
             {
               type: ContentType.text,
-              text: "Given a context, answer questions succintly yet complete.",
+              text: 'Given a context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
@@ -837,12 +850,12 @@ Given a context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "context",
+              text: 'context',
               _promptlSourceMap: [
                 {
                   start: 0,
                   end: 7,
-                  identifier: "context",
+                  identifier: 'context',
                 },
               ],
             },
@@ -853,12 +866,12 @@ Given a context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "Please, help me\n  with question!",
+              text: 'Please, help me\n  with question!',
               _promptlSourceMap: [
                 {
                   start: 23,
                   end: 31,
-                  identifier: "question",
+                  identifier: 'question',
                 },
               ],
             },
@@ -869,46 +882,46 @@ Given a context, answer questions succintly yet complete.
           content: [
             {
               type: ContentType.text,
-              text: "Is this the real life?",
+              text: 'Is this the real life?',
               _promptlSourceMap: [],
             },
             {
               type: ContentType.text,
-              text: "Is this just fantasy?\n  lyrics",
+              text: 'Is this just fantasy?\n  lyrics',
               _promptlSourceMap: [
                 {
                   start: 24,
                   end: 30,
-                  identifier: "lyrics",
+                  identifier: 'lyrics',
                 },
               ],
             },
             {
               type: ContentType.image,
-              image: "image",
+              image: 'image',
               _promptlSourceMap: [
                 {
                   start: 0,
                   end: 5,
-                  identifier: "image",
+                  identifier: 'image',
                 },
               ],
             },
             {
               type: ContentType.file,
-              file: "file",
-              mimeType: "text/plain",
+              file: 'file',
+              mimeType: 'text/plain',
               _promptlSourceMap: [
                 {
                   start: 0,
                   end: 4,
-                  identifier: "file",
+                  identifier: 'file',
                 },
               ],
             },
           ],
         },
-      ]);
-    });
-  });
-});
+      ])
+    })
+  })
+})

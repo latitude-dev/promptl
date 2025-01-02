@@ -23,6 +23,7 @@ import {
 } from './types'
 
 export const OpenAIAdapter: ProviderAdapter<OpenAIMessage> = {
+  type: 'openai',
   fromPromptl(
     promptlConversation: PromptlConversation,
   ): ProviderConversation<OpenAIMessage> {
@@ -54,7 +55,7 @@ function toOpenAiFile(
       type: OpenAIContentType.input_audio,
       data: file.toString('base64'),
       format: mimeType.split('/').at(-1)!,
-    } 
+    }
   }
 
   return {

@@ -1,3 +1,7 @@
+import {
+  deserializeChain,
+  SerializedProps,
+} from '$promptl/compiler/deserializeChain'
 import { CHAIN_STEP_ISOLATED_ATTR } from '$promptl/constants'
 import parse from '$promptl/parser'
 import { Fragment } from '$promptl/parser/interfaces'
@@ -43,61 +47,54 @@ export class Chain<M extends AdapterMessageType = Message> {
   private globalConfig: Config | undefined
   private wasLastStepIsolated: boolean = false
 
+  static deserialize(args: SerializedProps) {
+    return deserializeChain(args)
+  }
+
   constructor({
     prompt,
     parameters = {},
+    serialized,
     adapter = Adapters.openai as ProviderAdapter<M>,
     ...compileOptions
   }: {
     prompt: string
     parameters?: Record<string, unknown>
     adapter?: ProviderAdapter<M>
+    serialized?: {
+      ast: Fragment
+      scope: Scope
+    }
   } & CompileOptions) {
     this.rawText = prompt
-    this.ast = parse(prompt)
-    this.scope = new Scope(parameters)
+    this.ast = serialized?.ast ?? parse(prompt)
+    this.scope = serialized?.scope ?? new Scope(parameters)
+    this.didStart = !!serialized
     this.adapter = adapter
     this.compileOptions = compileOptions
+
     if (this.adapter !== Adapters.default) {
       this.compileOptions.includeSourceMap = false
     }
-  }
-
-  private buildStepResponseContent(
-    response?: StepResponse<M>,
-  ): MessageContent[] | undefined {
-    if (response == undefined) return response
-
-    if (typeof response === 'string') {
-      return [{ type: ContentType.text, text: response }]
-    }
-
-    const responseMessage = {
-      ...response,
-      role: response.role ?? MessageRole.assistant,
-    } as M
-
-    const convertedMessages = this.adapter.toPromptl({
-      config: this.globalConfig ?? {},
-      messages: [responseMessage],
-    })
-
-    return convertedMessages.messages[0]!.content
   }
 
   async step(response?: StepResponse<M>): Promise<ChainStep<M>> {
     if (this._completed) {
       throw new Error('The chain has already completed')
     }
+
     if (!this.didStart && response !== undefined) {
       throw new Error('A response is not allowed before the chain has started')
     }
+
     if (this.didStart && response === undefined) {
       throw new Error('A response is required to continue the chain')
     }
+
     this.didStart = true
 
     const responseContent = this.buildStepResponseContent(response)
+
     if (responseContent && !this.wasLastStepIsolated) {
       this.globalMessages.push({
         role: MessageRole.assistant,
@@ -126,7 +123,9 @@ export class Chain<M extends AdapterMessageType = Message> {
     this.ast = ast
 
     this.globalConfig = globalConfig ?? this.globalConfig
-    this._completed = completed && !messages.length // If it returned a message, there is still a final step to be taken
+
+    // If it returned a message, there is still a final step to be taken
+    this._completed = completed && !messages.length
 
     const config = {
       ...this.globalConfig,
@@ -151,7 +150,44 @@ export class Chain<M extends AdapterMessageType = Message> {
     }
   }
 
+  serialize() {
+    if (!this.didStart) {
+      throw new Error(
+        'The chain has not started yet. You must call `step` at least once before calling `serialize`.',
+      )
+    }
+
+    return {
+      ast: this.ast,
+      scope: this.scope.serialize(),
+      adapterType: this.adapter.type,
+      compilerOptions: this.compileOptions,
+    }
+  }
+
   get completed(): boolean {
     return this._completed
+  }
+
+  private buildStepResponseContent(
+    response?: StepResponse<M>,
+  ): MessageContent[] | undefined {
+    if (response == undefined) return response
+
+    if (typeof response === 'string') {
+      return [{ type: ContentType.text, text: response }]
+    }
+
+    const responseMessage = {
+      ...response,
+      role: response.role ?? MessageRole.assistant,
+    } as M
+
+    const convertedMessages = this.adapter.toPromptl({
+      config: this.globalConfig ?? {},
+      messages: [responseMessage],
+    })
+
+    return convertedMessages.messages[0]!.content
   }
 }
