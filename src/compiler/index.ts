@@ -58,4 +58,6 @@ export function scan({
   }).run()
 }
 
-export { Chain, type Document, type ReferencePromptFn }
+type SerializedChain = ReturnType<Chain['serialize']>
+
+export { Chain, type SerializedChain, type Document, type ReferencePromptFn }

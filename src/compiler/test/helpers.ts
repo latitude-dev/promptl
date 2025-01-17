@@ -38,21 +38,23 @@ export async function complete({
   steps: number
 }> {
   let steps = 0
-
   let responseMessage: Omit<AssistantMessage, 'role'> | undefined
-  while (true) {
-    const { completed, messages, config } =
-      await chain.step(responseMessage)
 
-    if (completed)
+  while (true) {
+    const { completed, messages, config } = await chain.step(responseMessage)
+
+    if (completed) {
       return {
         messages,
         config,
         steps,
         response: responseMessage!.content as MessageContent[],
       }
+    }
 
-    const response = callback ? await callback({ messages, config }) : 'RESPONSE'
+    const response = callback
+      ? await callback({ messages, config })
+      : 'RESPONSE'
     responseMessage = { content: [{ type: ContentType.text, text: response }] }
     steps++
 

@@ -1,6 +1,6 @@
 {
   "name": "promptl-ai",
-  "version": "0.3.5",
+  "version": "0.4.5",
   "author": "Latitude Data",
   "license": "MIT",
   "description": "Compiler for PromptL, the prompt language",
@@ -28,6 +28,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prettier": "prettier --write src/**/*.ts",
+    "prettier:check": "prettier --check src/**/*.ts --ignore-path .prettierrcignore",
     "lint": "eslint src",
     "tc": "tsc --noEmit"
   },
@@ -39,10 +40,17 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "eslint": "^9.17.0",
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.17.0",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/estree": "^1.0.1",
     "@types/node": "^20.12.12",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
     "rollup": "^4.10.0",
     "rollup-plugin-dts": "^6.1.1",
     "tslib": "^2.8.1",

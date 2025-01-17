@@ -26,6 +26,7 @@ import {
 } from './types'
 
 export const AnthropicAdapter: ProviderAdapter<AnthropicMessage> = {
+  type: 'anthropic',
   fromPromptl(
     promptlConversation: PromptlConversation,
   ): ProviderConversation<AnthropicMessage> {
@@ -158,11 +159,11 @@ function toAnthropicFile(
       ...rest,
       type: AnthropicContentType.document,
       source: {
-        type: 'base64', 
+        type: 'base64',
         media_type: mimeType,
         data: file.toString('base64'),
       },
-    } 
+    }
   }
 
   return {

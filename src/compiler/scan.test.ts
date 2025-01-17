@@ -1,71 +1,70 @@
-import { TAG_NAMES } from "$promptl/constants";
-import path from "path";
-import CompileError from "$promptl/error/error";
-import { describe, expect, it } from "vitest";
-import { z } from "zod";
+import { TAG_NAMES } from '$promptl/constants'
+import path from 'path'
+import CompileError from '$promptl/error/error'
+import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 
-import { scan } from ".";
-import { Document } from "./types";
-import { removeCommonIndent } from "./utils";
+import { scan } from '.'
+import { Document } from './types'
+import { removeCommonIndent } from './utils'
 
 type PromptTree = {
-  [path: string]: string | PromptTree;
-};
+  [path: string]: string | PromptTree
+}
 
 const referenceFn = (prompts: PromptTree) => {
   return async (
     relativePath: string,
     currentAbsolutePath?: string,
   ): Promise<Document | undefined> => {
-    path.resolve;
+    path.resolve
     const refAbsolutePath = currentAbsolutePath
       ? path
-        .resolve(path.dirname(`/${currentAbsolutePath}`), relativePath)
-        .replace(/^\//, "")
-      : relativePath;
+          .resolve(path.dirname(`/${currentAbsolutePath}`), relativePath)
+          .replace(/^\//, '')
+      : relativePath
 
-    if (!(refAbsolutePath in prompts)) return undefined;
+    if (!(refAbsolutePath in prompts)) return undefined
 
     return {
       path: refAbsolutePath,
       content: prompts[refAbsolutePath]!,
-    } as Document;
-  };
-};
+    } as Document
+  }
+}
 
-describe("hash", async () => {
-  it("always returns the same hash for the same prompt", async () => {
-    const prompt1 = "This is a prompt";
-    const prompt2 = "This is a prompt";
-    const prompt3 = "This is another prompt";
+describe('hash', async () => {
+  it('always returns the same hash for the same prompt', async () => {
+    const prompt1 = 'This is a prompt'
+    const prompt2 = 'This is a prompt'
+    const prompt3 = 'This is another prompt'
 
-    const metadata1 = await scan({ prompt: prompt1 });
-    const metadata2 = await scan({ prompt: prompt2 });
-    const metadata3 = await scan({ prompt: prompt3 });
+    const metadata1 = await scan({ prompt: prompt1 })
+    const metadata2 = await scan({ prompt: prompt2 })
+    const metadata3 = await scan({ prompt: prompt3 })
 
-    expect(metadata1.hash).toBe(metadata2.hash);
-    expect(metadata1.hash).not.toBe(metadata3.hash);
-  });
+    expect(metadata1.hash).toBe(metadata2.hash)
+    expect(metadata1.hash).not.toBe(metadata3.hash)
+  })
 
-  it("includes the content from referenced tags into account when calculating the hash", async () => {
-    const parent =
-      'This is the parent prompt. <prompt path="child" /> The end.';
-    const child1 = "ABCDEFG";
-    const child2 = "1234567";
+  it('includes the content from referenced tags into account when calculating the hash', async () => {
+    const parent = 'This is the parent prompt. <prompt path="child" /> The end.'
+    const child1 = 'ABCDEFG'
+    const child2 = '1234567'
 
     const metadata1 = await scan({
       prompt: parent,
       referenceFn: referenceFn({ child: child1 }),
-    });
+    })
     const metadata2 = await scan({
       prompt: parent,
       referenceFn: referenceFn({ child: child2 }),
-    });
+    })
 
-    expect(metadata1.hash).not.toBe(metadata2.hash);
-  });
+    expect(metadata1.hash).not.toBe(metadata2.hash)
+  })
 
-  it("works with multiple levels of nesting", async () => {
+  it('works with multiple levels of nesting', async () => {
     const prompts = {
       parent: removeCommonIndent(`
         Parent:
@@ -81,81 +80,81 @@ describe("hash", async () => {
       grandchild2: removeCommonIndent(`
         Grandchild 2.
       `),
-    };
+    }
 
     const parentMetadata1 = await scan({
-      prompt: prompts["parent"]!,
+      prompt: prompts['parent']!,
       referenceFn: referenceFn({
         ...prompts,
-        grandchild: prompts["grandchild1"],
+        grandchild: prompts['grandchild1'],
       }),
-    });
+    })
 
     const parentMetadata2 = await scan({
-      prompt: prompts["parent"]!,
+      prompt: prompts['parent']!,
       referenceFn: referenceFn({
         ...prompts,
-        grandchild: prompts["grandchild2"],
+        grandchild: prompts['grandchild2'],
       }),
-    });
+    })
 
-    expect(parentMetadata1.hash).not.toBe(parentMetadata2.hash);
-  });
+    expect(parentMetadata1.hash).not.toBe(parentMetadata2.hash)
+  })
 
-  it("extract all the paths of the referenced prompts", async () => {
+  it('extract all the paths of the referenced prompts', async () => {
     const prompts = {
-      rootFile: removeCommonIndent("Root File"),
-      "siblingParent/sibling": removeCommonIndent("Sibling Parent File"),
-      "somefolder/parent": removeCommonIndent(`
+      rootFile: removeCommonIndent('Root File'),
+      'siblingParent/sibling': removeCommonIndent('Sibling Parent File'),
+      'somefolder/parent': removeCommonIndent(`
         Parent:
         <prompt path="./children/child1" />
         <prompt path="../siblingParent/sibling" />
         <prompt path="./children/child2" />
       `),
-      "somefolder/children/child1": removeCommonIndent(`
+      'somefolder/children/child1': removeCommonIndent(`
         Child 1:
         <prompt path="./grandchildren/grandchild1" />
         <prompt path="./childSibling" />
       `),
-      "somefolder/children/grandchildren/grandchild1": removeCommonIndent(`
+      'somefolder/children/grandchildren/grandchild1': removeCommonIndent(`
           Grandchild 1:
           <prompt path="./grand-grand-grandChildren/deepestGrandChild" />
        `),
-      "somefolder/children/grandchildren/grand-grand-grandChildren/deepestGrandChild":
-        removeCommonIndent("Grandchild 2"),
-      "somefolder/children/child2": removeCommonIndent(`
+      'somefolder/children/grandchildren/grand-grand-grandChildren/deepestGrandChild':
+        removeCommonIndent('Grandchild 2'),
+      'somefolder/children/child2': removeCommonIndent(`
         Child 2:
         <prompt path="./grandchildren/grandchild2" />
         <prompt path="./childSibling" />
       `),
-      "somefolder/children/grandchildren/grandchild2":
-        removeCommonIndent("Grandchild 2"),
-      "somefolder/children/childSibling": removeCommonIndent(`
+      'somefolder/children/grandchildren/grandchild2':
+        removeCommonIndent('Grandchild 2'),
+      'somefolder/children/childSibling': removeCommonIndent(`
         Link to grand grand child 2:
         <prompt path="grandGrandChild2" />
       `),
-    };
+    }
 
     const metadata = await scan({
-      prompt: prompts["somefolder/parent"],
+      prompt: prompts['somefolder/parent'],
       referenceFn: referenceFn(prompts),
-      fullPath: "somefolder/parent",
-    });
+      fullPath: 'somefolder/parent',
+    })
 
-    const includedPaths = Array.from(metadata.includedPromptPaths);
+    const includedPaths = Array.from(metadata.includedPromptPaths)
     expect(includedPaths).toEqual([
-      "somefolder/parent",
-      "somefolder/children/child1",
-      "somefolder/children/grandchildren/grandchild1",
-      "somefolder/children/grandchildren/grand-grand-grandChildren/deepestGrandChild",
-      "somefolder/children/childSibling",
-      "siblingParent/sibling",
-      "somefolder/children/child2",
-      "somefolder/children/grandchildren/grandchild2",
-    ]);
-  });
+      'somefolder/parent',
+      'somefolder/children/child1',
+      'somefolder/children/grandchildren/grandchild1',
+      'somefolder/children/grandchildren/grand-grand-grandChildren/deepestGrandChild',
+      'somefolder/children/childSibling',
+      'siblingParent/sibling',
+      'somefolder/children/child2',
+      'somefolder/children/grandchildren/grandchild2',
+    ])
+  })
 
-  it("works with nested tags", async () => {
+  it('works with nested tags', async () => {
     const prompts = {
       parent: removeCommonIndent(`
         {{if foo}}
@@ -173,63 +172,63 @@ describe("hash", async () => {
       child2v2: removeCommonIndent(`
         baz!
       `),
-    };
+    }
 
     const parentMetadatav1 = await scan({
-      prompt: prompts["parent"]!,
+      prompt: prompts['parent']!,
       referenceFn: referenceFn({
         ...prompts,
-        child2: prompts["child2v1"],
+        child2: prompts['child2v1'],
       }),
-    });
+    })
 
     const parentMetadatav2 = await scan({
-      prompt: prompts["parent"]!,
+      prompt: prompts['parent']!,
       referenceFn: referenceFn({
         ...prompts,
-        child2: prompts["child2v2"],
+        child2: prompts['child2v2'],
       }),
-    });
+    })
 
-    expect(parentMetadatav1.hash).not.toBe(parentMetadatav2.hash);
-  });
-});
+    expect(parentMetadatav1.hash).not.toBe(parentMetadatav2.hash)
+  })
+})
 
-describe("resolvedPrompt", async () => {
-  it("returns the prompt without comments", async () => {
+describe('resolvedPrompt', async () => {
+  it('returns the prompt without comments', async () => {
     const prompt = `
       This is a prompt.
       /* This is a comment */
       This is another prompt.
-    `;
+    `
 
     const metadata = await scan({
       prompt: removeCommonIndent(prompt),
-    });
+    })
 
     expect(metadata.resolvedPrompt).toBe(
-      "This is a prompt.\n\nThis is another prompt.",
-    );
-  });
+      'This is a prompt.\n\nThis is another prompt.',
+    )
+  })
 
-  it("Replaces reference tags with scope tags", async () => {
+  it('Replaces reference tags with scope tags', async () => {
     const prompt = removeCommonIndent(`
       This is a prompt.
       <prompt path="child" bar={{ foo }} />
       This is another prompt.
-    `);
+    `)
 
     const childPrompt = removeCommonIndent(`
       <user>
         This is the referenced prompt.
         {{ bar }}
       </user>
-    `);
+    `)
 
     const metadata = await scan({
       prompt,
       referenceFn: referenceFn({ child: childPrompt }),
-    });
+    })
 
     expect(metadata.resolvedPrompt).toBe(
       removeCommonIndent(`
@@ -240,17 +239,17 @@ describe("resolvedPrompt", async () => {
       </user></scope>
       This is another prompt.
     `),
-    );
-  });
+    )
+  })
 
-  it("only includes the parent config", async () => {
+  it('only includes the parent config', async () => {
     const prompt = removeCommonIndent(`
       ---
       config: parent
       ---
 
       <prompt path="child" />
-    `);
+    `)
 
     const childPrompt = removeCommonIndent(`
       ---
@@ -259,12 +258,12 @@ describe("resolvedPrompt", async () => {
       ---
 
       This is the child prompt.
-    `);
+    `)
 
     const metadata = await scan({
       prompt,
       referenceFn: referenceFn({ child: childPrompt }),
-    });
+    })
 
     expect(metadata.resolvedPrompt).toBe(
       removeCommonIndent(`
@@ -275,13 +274,13 @@ describe("resolvedPrompt", async () => {
       <scope >
       This is the child prompt.</scope>
     `),
-    );
-    expect(metadata.config).toEqual({ config: "parent" });
-  });
-});
+    )
+    expect(metadata.config).toEqual({ config: 'parent' })
+  })
+})
 
-describe("config", async () => {
-  it("compiles the YAML written in the config section and returns it as the config attribute in the result", async () => {
+describe('config', async () => {
+  it('compiles the YAML written in the config section and returns it as the config attribute in the result', async () => {
     const prompt = `
       ---
       foo: bar
@@ -289,18 +288,18 @@ describe("config", async () => {
        - qux
        - quux
       ---
-    `;
+    `
     const metadata = await scan({
       prompt: removeCommonIndent(prompt),
-    });
+    })
 
     expect(metadata.config).toEqual({
-      foo: "bar",
-      baz: ["qux", "quux"],
-    });
-  });
+      foo: 'bar',
+      baz: ['qux', 'quux'],
+    })
+  })
 
-  it("does not confuse several dashes with a config section", async () => {
+  it('does not confuse several dashes with a config section', async () => {
     const prompt = removeCommonIndent(`
       This is not config:
       --------------------
@@ -310,18 +309,18 @@ describe("config", async () => {
 
       This ain't either:
       --
-    `);
+    `)
 
     const metadata = await scan({
       prompt: removeCommonIndent(prompt),
-    });
+    })
 
-    expect(metadata.errors[0]?.toString()).toBeUndefined();
-    expect(metadata.errors.length).toBe(0);
-    expect(metadata.config).toEqual({});
-  });
+    expect(metadata.errors[0]?.toString()).toBeUndefined()
+    expect(metadata.errors.length).toBe(0)
+    expect(metadata.config).toEqual({})
+  })
 
-  it("can be escaped", async () => {
+  it('can be escaped', async () => {
     const prompt = removeCommonIndent(`
       This is NOT a config:
       \\---
@@ -330,14 +329,14 @@ describe("config", async () => {
        - qux
        - quux
       \\---
-    `);
+    `)
 
-    const metadata = await scan({ prompt });
+    const metadata = await scan({ prompt })
 
-    expect(metadata.config).toEqual({});
-  });
+    expect(metadata.config).toEqual({})
+  })
 
-  it("fails when there is content before the config section", async () => {
+  it('fails when there is content before the config section', async () => {
     const prompt = removeCommonIndent(`
       Lorem ipsum
       ---
@@ -346,32 +345,32 @@ describe("config", async () => {
        - qux
        - quux
       ---
-    `);
+    `)
 
-    const metadata = await scan({ prompt });
+    const metadata = await scan({ prompt })
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("invalid-config-placement");
-  });
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('invalid-config-placement')
+  })
 
-  it("fails when the config is not valid YAML", async () => {
+  it('fails when the config is not valid YAML', async () => {
     const prompt = removeCommonIndent(`
       ---
       foo: bar
       baa
       ---
-    `);
+    `)
 
-    const metadata = await scan({ prompt });
+    const metadata = await scan({ prompt })
 
-    expect(metadata.config).toEqual({ foo: "bar", baa: null });
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("invalid-config");
-  });
+    expect(metadata.config).toEqual({ foo: 'bar', baa: null })
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('invalid-config')
+  })
 
-  it("fails when there are multiple config sections", async () => {
+  it('fails when there are multiple config sections', async () => {
     const prompt = removeCommonIndent(`
       ---
       foo: bar
@@ -379,69 +378,69 @@ describe("config", async () => {
       ---
       baz: qux
       ---
-    `);
+    `)
 
-    const metadata = await scan({ prompt });
+    const metadata = await scan({ prompt })
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("config-already-declared");
-  });
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('config-already-declared')
+  })
 
-  it("fails when a schema is provided and there is no config section", async () => {
+  it('fails when a schema is provided and there is no config section', async () => {
     const prompt = removeCommonIndent(`
       Lorem ipsum
-    `);
+    `)
 
     const metadata = await scan({
       prompt,
       configSchema: z.object({
         foo: z.string(),
       }),
-    });
+    })
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("config-not-found");
-  });
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('config-not-found')
+  })
 
-  it("fails when the configSchema is not validated", async () => {
+  it('fails when the configSchema is not validated', async () => {
     const prompt = removeCommonIndent(`
       ---
       foo: 2
       ---
-    `);
+    `)
 
     const metadata = await scan({
       prompt,
       configSchema: z.object({
         foo: z.string(),
       }),
-    });
+    })
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("invalid-config");
-  });
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('invalid-config')
+  })
 
-  it("does not fail when the config schema is validated", async () => {
+  it('does not fail when the config schema is validated', async () => {
     const prompt = removeCommonIndent(`
       ---
       foo: bar
       ---
-    `);
+    `)
 
     const metadata = await scan({
       prompt,
       configSchema: z.object({
         foo: z.string(),
       }),
-    });
+    })
 
-    expect(metadata.errors.length).toBe(0);
-  });
+    expect(metadata.errors.length).toBe(0)
+  })
 
-  it("returns the correct positions of parsing errors", async () => {
+  it('returns the correct positions of parsing errors', async () => {
     const prompt = removeCommonIndent(`
       /*
         Lorem ipsum
@@ -450,100 +449,100 @@ describe("config", async () => {
       foo: bar
       baa
       ---
-    `);
+    `)
 
-    const expectedErrorPosition = prompt.indexOf("baa");
+    const expectedErrorPosition = prompt.indexOf('baa')
 
-    const metadata = await scan({ prompt });
+    const metadata = await scan({ prompt })
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("invalid-config");
-    expect(metadata.errors[0]!.pos).toBe(expectedErrorPosition);
-  });
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('invalid-config')
+    expect(metadata.errors[0]!.pos).toBe(expectedErrorPosition)
+  })
 
-  it("returns the correct positions of schema errors", async () => {
+  it('returns the correct positions of schema errors', async () => {
     const prompt = removeCommonIndent(`
       ---
       foo: bar
       ---
-    `);
+    `)
 
     const metadata = await scan({
       prompt,
       configSchema: z.object({
         foo: z.number(),
       }),
-    });
-    const expectedErrorPosition = prompt.indexOf("bar");
+    })
+    const expectedErrorPosition = prompt.indexOf('bar')
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("invalid-config");
-    expect(metadata.errors[0]!.pos).toBe(expectedErrorPosition);
-  });
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('invalid-config')
+    expect(metadata.errors[0]!.pos).toBe(expectedErrorPosition)
+  })
 
-  it("fails when the config section is defined inside an if block", async () => {
+  it('fails when the config section is defined inside an if block', async () => {
     const prompt = removeCommonIndent(`
       {{ if true }}
         ---
         foo: bar
         ---
       {{ endif }}
-    `);
+    `)
 
-    const metadata = await scan({ prompt });
+    const metadata = await scan({ prompt })
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("config-outside-root");
-  });
-});
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('config-outside-root')
+  })
+})
 
-describe("parameters", async () => {
-  it("detects undefined variables being used in the prompt", async () => {
+describe('parameters', async () => {
+  it('detects undefined variables being used in the prompt', async () => {
     const prompt = `
       {{ foo }}
-    `;
+    `
 
     const metadata = await scan({
       prompt: removeCommonIndent(prompt),
-    });
+    })
 
-    expect(metadata.parameters).toEqual(new Set(["foo"]));
-  });
+    expect(metadata.parameters).toEqual(new Set(['foo']))
+  })
 
-  it("ignores variables that are defined in the prompt", async () => {
+  it('ignores variables that are defined in the prompt', async () => {
     const prompt = `
       {{ foo = 5 }}
       {{ foo }}
-    `;
+    `
 
     const metadata = await scan({
       prompt: removeCommonIndent(prompt),
-    });
+    })
 
-    expect(metadata.parameters).toEqual(new Set());
-  });
+    expect(metadata.parameters).toEqual(new Set())
+  })
 
-  it("adds the correct parameters to the scope context", async () => {
+  it('adds the correct parameters to the scope context', async () => {
     const prompt = `
       {{ foo }}
       {{ bar }}
       {{ for val in arr }}
       {{ endfor }}
-    `;
+    `
 
     const metadata = await scan({
       prompt: removeCommonIndent(prompt),
-    });
+    })
 
-    expect(metadata.parameters).toEqual(new Set(["foo", "bar", "arr"]));
-  });
-});
+    expect(metadata.parameters).toEqual(new Set(['foo', 'bar', 'arr']))
+  })
+})
 
-describe("referenced prompts", async () => {
-  it("does not include parameters from referenced prompts", async () => {
+describe('referenced prompts', async () => {
+  it('does not include parameters from referenced prompts', async () => {
     const prompts = {
       parent: removeCommonIndent(`
         This is the parent prompt.
@@ -554,18 +553,18 @@ describe("referenced prompts", async () => {
       child: removeCommonIndent(`
         {{ childParam }}
       `),
-    };
+    }
 
     const metadata = await scan({
-      prompt: prompts["parent"]!,
+      prompt: prompts['parent']!,
       referenceFn: referenceFn(prompts),
-    });
+    })
 
-    expect(metadata.parameters).toContain("parentParam");
-    expect(metadata.parameters).not.toContain("childParam");
-  });
+    expect(metadata.parameters).toContain('parentParam')
+    expect(metadata.parameters).not.toContain('childParam')
+  })
 
-  it("returns an error if a child param is not included in the reference tag", async () => {
+  it('returns an error if a child param is not included in the reference tag', async () => {
     const prompts = {
       child: removeCommonIndent(`
         {{ childParam }}
@@ -580,87 +579,87 @@ describe("referenced prompts", async () => {
         <prompt path="child" />
         The end.
       `),
-    };
+    }
 
     const metadataCorrect = await scan({
-      prompt: prompts["parentCorrect"]!,
+      prompt: prompts['parentCorrect']!,
       referenceFn: referenceFn(prompts),
-    });
+    })
 
-    expect(metadataCorrect.errors.length).toBe(0);
+    expect(metadataCorrect.errors.length).toBe(0)
 
     const metadataWrong = await scan({
-      prompt: prompts["parentWrong"]!,
+      prompt: prompts['parentWrong']!,
       referenceFn: referenceFn(prompts),
-    });
+    })
 
-    expect(metadataWrong.errors.length).toBe(1);
-  });
-});
+    expect(metadataWrong.errors.length).toBe(1)
+  })
+})
 
-describe("scope tags", async () => {
-  it("can scan prompts with scope tags", async () => {
+describe('scope tags', async () => {
+  it('can scan prompts with scope tags', async () => {
     const prompt = removeCommonIndent(`
       <scope>
         This is the prompt.
       </scope>
-    `);
+    `)
 
-    const metadata = await scan({ prompt });
+    const metadata = await scan({ prompt })
 
-    expect(metadata.parameters).toEqual(new Set());
-  });
+    expect(metadata.parameters).toEqual(new Set())
+  })
 
-  it("Does not add parameters from the scope tag to the parent scope", async () => {
+  it('Does not add parameters from the scope tag to the parent scope', async () => {
     const prompt = removeCommonIndent(`
       <scope foo={{ bar }}>
         {{ foo }}
       </scope>
-    `);
+    `)
 
-    const metadata = await scan({ prompt });
+    const metadata = await scan({ prompt })
 
-    expect(metadata.parameters).toEqual(new Set(["bar"]));
-  });
+    expect(metadata.parameters).toEqual(new Set(['bar']))
+  })
 
-  it("returns an error when the scope tag is trying to use a variable that is not defined", async () => {
+  it('returns an error when the scope tag is trying to use a variable that is not defined', async () => {
     const prompt = removeCommonIndent(`
       <scope foo1={{ bar1 }}>
         {{ foo1 }}
         {{ foo2 }}
       </scope>
-    `);
+    `)
 
     const metadata = await scan({
       prompt: removeCommonIndent(prompt),
-    });
+    })
 
-    expect(metadata.parameters).toEqual(new Set(["bar1"]));
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    const error = metadata.errors[0] as CompileError;
-    expect(error.code).toBe("reference-missing-parameter");
-  });
-});
+    expect(metadata.parameters).toEqual(new Set(['bar1']))
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    const error = metadata.errors[0] as CompileError
+    expect(error.code).toBe('reference-missing-parameter')
+  })
+})
 
-describe("syntax errors", async () => {
-  it("returns CompileErrors when the prompt syntax is invalid", async () => {
+describe('syntax errors', async () => {
+  it('returns CompileErrors when the prompt syntax is invalid', async () => {
     const prompt = `
       <user>
         <user>
         </user>
       </user>
-    `;
+    `
 
     const metadata = await scan({
       prompt,
-    });
+    })
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-  });
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+  })
 
-  it("finds circular references", async () => {
+  it('finds circular references', async () => {
     const prompts = {
       parent: removeCommonIndent(`
         This is the parent prompt.
@@ -671,19 +670,19 @@ describe("syntax errors", async () => {
         This is the child prompt.
         <prompt path="parent" />
       `),
-    };
+    }
 
     const metadata = await scan({
-      prompt: prompts["parent"]!,
+      prompt: prompts['parent']!,
       referenceFn: referenceFn(prompts),
-    });
+    })
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("circular-reference");
-  });
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('circular-reference')
+  })
 
-  it("shows errors from referenced prompts as errors in the parent", async () => {
+  it('shows errors from referenced prompts as errors in the parent', async () => {
     const prompts = {
       parent: removeCommonIndent(`
         This is the parent prompt.
@@ -695,35 +694,35 @@ describe("syntax errors", async () => {
         Error: (close unopened tag)
         </${TAG_NAMES.message}>
       `),
-    };
+    }
 
     const metadata = await scan({
-      prompt: prompts["parent"]!,
+      prompt: prompts['parent']!,
       referenceFn: referenceFn(prompts),
-    });
+    })
 
-    expect(metadata.errors.length).toBe(1);
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError);
-    expect(metadata.errors[0]!.code).toBe("reference-error");
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('reference-error')
     expect(metadata.errors[0]!.message).contains(
-      "The referenced prompt contains an error:",
-    );
+      'The referenced prompt contains an error:',
+    )
     expect(metadata.errors[0]!.message).contains(
       `Unexpected closing tag for ${TAG_NAMES.message}`,
-    );
-  });
+    )
+  })
 
-  it("allows message tags inside steps", async () => {
+  it('allows message tags inside steps', async () => {
     const prompt = removeCommonIndent(`
       <step>
         <user>
           {{ user_message }}
         </user>
       </step>
-    `);
+    `)
 
-    const metadata = await scan({ prompt });
+    const metadata = await scan({ prompt })
 
-    expect(metadata.errors.length).toBe(0);
-  });
-});
+    expect(metadata.errors.length).toBe(0)
+  })
+})
