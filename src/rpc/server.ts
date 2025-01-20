@@ -89,7 +89,7 @@ async function execute(calls: RPC.Call<any>[]): Promise<RPC.Result<any>[]> {
     } catch (error) {
       result.error = {
         code: RPC.ErrorCode.ProcedureError,
-        message: String(error),
+        message: error instanceof Error ? error.message : String(error),
         details: error as any,
       }
       results.push(result)
@@ -113,7 +113,7 @@ export function serve() {
         id: -1,
         error: {
           code: RPC.ErrorCode.ReceiveError,
-          message: `Failed to unmarshal RPC calls: ${error}`,
+          message: `Failed to unmarshal RPC calls: ${error instanceof Error ? error.message : String(error)}`,
         },
       },
     ])
@@ -130,7 +130,7 @@ export function serve() {
             id: -1,
             error: {
               code: RPC.ErrorCode.SendError,
-              message: `Failed to marshal RPC results: ${error}`,
+              message: `Failed to marshal RPC results: ${error instanceof Error ? error.message : String(error)}`,
             },
           },
         ])
@@ -142,7 +142,7 @@ export function serve() {
           id: -1,
           error: {
             code: RPC.ErrorCode.ExecuteError,
-            message: `Failed to execute RPC calls: ${error}`,
+            message: `Failed to execute RPC calls: ${error instanceof Error ? error.message : String(error)}`,
           },
         },
       ])

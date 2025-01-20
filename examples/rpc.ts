@@ -1,35 +1,68 @@
 // Run `pnpm build:rpc` before running this example
 
+import assert from 'node:assert'
 import { FileHandle, mkdir, open, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { inspect } from 'node:util'
 import { WASI } from 'node:wasi'
 
-const result = await execute('./dist/promptl.wasm', [
-  {
-    id: 1,
-    procedure: 'scan',
-    parameters: {
-      prompt: `Hello world!`,
-    },
-  },
-  {
-    id: 2,
-    procedure: 'compile',
-    parameters: {
-      prompt: 'Hello {{ name }}!',
-      parameters: {
-        name: 'Alex',
-      },
-    },
-  },
-])
+const PROMPTL_WASM_PATH = './dist/promptl.wasm'
 
-console.log(JSON.stringify(result, null, 2))
+const prompt = `
+<step>
+  <system>
+    You are a helpful assistant.
+  </system>
+  <user>
+    Say hello.
+  </user>
+</step>
+<step>
+  <user>
+    Now say goodbye.
+  </user>
+</step>
+`
+let chain, conversation
+chain = await createChain(prompt);
+({ chain, ...conversation } = await stepChain(chain));
+({ chain, ...conversation } = await stepChain(chain, 'Hello!'));
+({ chain, ...conversation } = await stepChain(chain, 'Goodbye!'));
+
+assert(chain.completed)
+assert(conversation.completed)
+
+console.log(inspect(conversation.messages, { depth: null }))
 
 // Utility functions
 
-async function execute(wasm: string, data: any): Promise<any> {
+async function createChain(prompt: string): Promise<any> {
+  return await execute([
+    {
+      id: 1,
+      procedure: 'createChain',
+      parameters: {
+        prompt: prompt,
+      },
+    },
+  ]).then((result) => result[0]!.value)
+}
+
+async function stepChain(chain: any, response?: any): Promise<any> {
+  return await execute([
+    {
+      id: 1,
+      procedure: 'stepChain',
+      parameters: {
+        chain: chain,
+        response: response,
+      },
+    },
+  ]).then((result) => result[0]!.value)
+}
+
+async function execute(data: any): Promise<any> {
   const dir = tmpdir()
   const stdin_path = join(dir, `stdin`)
   const stdout_path = join(dir, `stdout`)
@@ -67,7 +100,7 @@ async function execute(wasm: string, data: any): Promise<any> {
       returnOnExit: true,
     })
 
-    const bytes = await readFile(wasm)
+    const bytes = await readFile(PROMPTL_WASM_PATH)
     WebAssembly.validate(bytes)
     const module = await WebAssembly.compile(bytes)
     const instance = await WebAssembly.instantiate(
@@ -100,7 +133,7 @@ async function send(file: FileHandle, data: any) {
 }
 
 async function receive(file: FileHandle): Promise<any> {
-  const data = (await readFile(file, 'utf8')).trim()
+  const data = await readFile(file, 'utf8').then((data) => data.trim())
 
   try {
     return JSON.parse(data)

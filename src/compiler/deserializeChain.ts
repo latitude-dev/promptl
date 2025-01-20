@@ -1,16 +1,7 @@
 import { SerializedChain } from '$promptl/compiler'
 import { Chain } from '$promptl/compiler/chain'
 import Scope from '$promptl/compiler/scope'
-import { AdapterKey, Adapters, ProviderAdapter } from '$promptl/providers'
-import { Message } from '$promptl/types'
-
-function getAdapter<M extends Message>(adapterType: AdapterKey) {
-  const adapter = Adapters[adapterType]
-
-  if (!adapter) throw new Error(`Adapter not found: ${adapterType}`)
-
-  return adapter as ProviderAdapter<M>
-}
+import { getAdapter } from '$promptl/providers'
 
 function safeSerializedData(data: string | SerializedChain): SerializedChain {
   try {
@@ -29,6 +20,8 @@ function safeSerializedData(data: string | SerializedChain): SerializedChain {
       typeof serialized !== 'object' ||
       typeof serialized.ast !== 'object' ||
       typeof serialized.scope !== 'object' ||
+      typeof serialized.didStart !== 'boolean' ||
+      typeof serialized.completed !== 'boolean' ||
       typeof serialized.adapterType !== 'string' ||
       typeof serialized.rawText !== 'string'
     ) {
@@ -38,6 +31,8 @@ function safeSerializedData(data: string | SerializedChain): SerializedChain {
       rawText: serialized.rawText,
       ast: serialized.ast,
       scope: serialized.scope,
+      didStart: serialized.didStart,
+      completed: serialized.completed,
       adapterType: serialized.adapterType,
       compilerOptions,
       globalConfig,
@@ -60,6 +55,8 @@ export function deserializeChain({
     rawText,
     ast,
     scope: serializedScope,
+    didStart,
+    completed,
     adapterType,
     compilerOptions,
     globalConfig,
@@ -73,7 +70,14 @@ export function deserializeChain({
 
   return new Chain({
     prompt: rawText,
-    serialized: { ast, scope, globalConfig, globalMessages },
+    serialized: {
+      ast,
+      scope,
+      didStart,
+      completed,
+      globalConfig,
+      globalMessages,
+    },
     adapter,
     ...compilerOptions,
   })

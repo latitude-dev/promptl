@@ -1,14 +1,31 @@
 // Run `pnpm build:lib` before running this example
 
+import assert from 'node:assert'
+import { inspect } from 'node:util'
 import { Chain } from '../dist/index.js'
 
 const prompt = `
+<step>
+  <system>
+    You are a helpful assistant.
+  </system>
   <user>
-    Hello world!
+    Say hello.
   </user>
+</step>
+<step>
+  <user>
+    Now say goodbye.
+  </user>
+</step>
 `
 
 const chain = new Chain({ prompt })
-const step = await chain.step()
+let conversation = await chain.step()
+conversation = await chain.step('Hello!')
+conversation = await chain.step('Goodbye!')
 
-console.log(step)
+assert(chain.completed)
+assert(conversation.completed)
+
+console.log(inspect(conversation.messages, { depth: null }))

@@ -9,8 +9,9 @@ declare global {
 
 export namespace RPC {
   export const enum Procedure {
-    Scan = 'scan',
-    Compile = 'compile',
+    ScanPrompt = 'scanPrompt',
+    CreateChain = 'createChain',
+    StepChain = 'stepChain',
   }
 
   export type Call<Parameters> = {
