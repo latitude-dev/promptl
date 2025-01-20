@@ -1,3 +1,5 @@
+// Run `pnpm build:lib` before running this example
+
 import { Chain } from '../dist/index.js'
 
 const prompt = `
@@ -7,7 +9,6 @@ const prompt = `
 `
 
 const chain = new Chain({ prompt })
-
 const step = await chain.step()
 
 console.log(step)
