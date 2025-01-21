@@ -35,11 +35,11 @@ function receive(): RPC.Call<any>[] {
     { offset: 0, calls: new Uint8Array(size) },
   )
 
-  return JSON.parse(new TextDecoder().decode(calls))
+  return JSON.parse(new TextDecoder().decode(calls).trim())
 }
 
 function send(results: RPC.Result<any>[]) {
-  const payload = new TextEncoder().encode(JSON.stringify(results))
+  const payload = new TextEncoder().encode(JSON.stringify(results) + '\n')
 
   Javy.IO.writeSync(Fd.StdOut, payload)
 }

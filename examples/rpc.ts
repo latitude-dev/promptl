@@ -63,10 +63,10 @@ async function stepChain(chain: any, response?: any): Promise<any> {
 }
 
 async function execute(data: any): Promise<any> {
-  const dir = tmpdir()
-  const stdin_path = join(dir, `stdin`)
-  const stdout_path = join(dir, `stdout`)
-  const stderr_path = join(dir, `stderr`)
+  const dir = join(tmpdir(), 'promptl')
+  const stdin_path = join(dir, 'stdin')
+  const stdout_path = join(dir, 'stdout')
+  const stderr_path = join(dir, 'stderr')
 
   await mkdir(dir, { recursive: true })
   await writeFile(stdin_path, '')
@@ -129,11 +129,16 @@ async function execute(data: any): Promise<any> {
 }
 
 async function send(file: FileHandle, data: any) {
-  await writeFile(file, JSON.stringify(data), { encoding: 'utf8' })
+  await writeFile(file, JSON.stringify(data) + '\n', {
+    encoding: 'utf8',
+    flush: true,
+  })
 }
 
 async function receive(file: FileHandle): Promise<any> {
-  const data = await readFile(file, 'utf8').then((data) => data.trim())
+  const data = await readFile(file, {
+    encoding: 'utf8',
+  }).then((data) => data.trim())
 
   try {
     return JSON.parse(data)
