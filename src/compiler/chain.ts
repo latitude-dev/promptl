@@ -27,7 +27,7 @@ type ChainStep<M extends AdapterMessageType> = ProviderConversation<M> & {
   completed: boolean
 }
 
-type StepResponse<M extends AdapterMessageType> =
+export type StepResponse<M extends AdapterMessageType> =
   | string
   | M[]
   | (Omit<M, 'role'> & {
@@ -70,6 +70,8 @@ export class Chain<M extends AdapterMessageType = Message> {
     serialized?: {
       ast: Fragment
       scope: Scope
+      didStart: boolean
+      completed: boolean
       globalConfig: Config | undefined
       globalMessages: Message[]
     }
@@ -79,9 +81,10 @@ export class Chain<M extends AdapterMessageType = Message> {
     // Init from a serialized chain
     this.ast = serialized?.ast ?? parse(prompt)
     this.scope = serialized?.scope ?? new Scope(parameters)
+    this.didStart = serialized?.didStart ?? false
+    this._completed = serialized?.completed ?? false
     this.globalConfig = serialized?.globalConfig
     this.globalMessages = serialized?.globalMessages ?? []
-    this.didStart = !!serialized
 
     this.adapter = adapter
     this.compileOptions = compileOptions
@@ -161,15 +164,11 @@ export class Chain<M extends AdapterMessageType = Message> {
   }
 
   serialize() {
-    if (!this.didStart) {
-      throw new Error(
-        'The chain has not started yet. You must call `step` at least once before calling `serialize`.',
-      )
-    }
-
     return {
       ast: this.ast,
       scope: this.scope.serialize(),
+      didStart: this.didStart,
+      completed: this._completed,
       adapterType: this.adapter.type,
       compilerOptions: this.compileOptions,
       globalConfig: this.globalConfig,

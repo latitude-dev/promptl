@@ -1,4 +1,4 @@
-import { createHash } from 'crypto'
+import sha256 from 'fast-sha256'
 
 import {
   CUSTOM_MESSAGE_ROLE_ATTR,
@@ -151,8 +151,12 @@ export class Scan {
       )
     }
 
-    const contentToHash = [this.rawText, ...this.referencedHashes].join('')
-    const hash = createHash('sha256').update(contentToHash).digest('hex')
+    const content = new TextEncoder().encode(
+      [this.rawText, ...this.referencedHashes].join(''),
+    )
+    const hash = Array.from(sha256(content))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
 
     return {
       parameters: new Set([

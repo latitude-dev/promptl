@@ -30,6 +30,7 @@ export default [
       globals: {
         ...globals.node,
         ...globals.browser,
+        Javy: 'readonly',
       },
 
       parser: tsParser,

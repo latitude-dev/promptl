@@ -1,13 +1,12 @@
-import { getExpectedError } from '$promptl/test/helpers'
 import { describe, expect, it } from 'vitest'
 
-import { Chain } from './chain'
-import { removeCommonIndent } from './utils'
 import { Adapters } from '$promptl/providers'
 import { MessageRole } from '$promptl/types'
+import { Chain } from './chain'
+import { removeCommonIndent } from './utils'
 
 describe('serialize chain', async () => {
-  it('fails when trying to serialize without running step', async () => {
+  it('serialize without running step', async () => {
     const prompt = removeCommonIndent(`
       <step>
         Before step
@@ -18,12 +17,22 @@ describe('serialize chain', async () => {
     `)
 
     const chain = new Chain({ prompt, adapter: Adapters.default })
+    const serialized = chain.serialize()
 
-    const action = () => chain.serialize()
-    const error = await getExpectedError(action, Error)
-    expect(error.message).toBe(
-      'The chain has not started yet. You must call `step` at least once before calling `serialize`.',
-    )
+    expect(serialized).toEqual({
+      rawText: prompt,
+      scope: {
+        pointers: {},
+        stash: [],
+      },
+      completed: false,
+      didStart: false,
+      adapterType: 'default',
+      compilerOptions: {},
+      globalConfig: undefined,
+      ast: expect.any(Object),
+      globalMessages: [],
+    })
   })
 
   it('serialize with single step', async () => {
@@ -43,12 +52,15 @@ describe('serialize chain', async () => {
     })
     await chain.step()
     const serialized = chain.serialize()
+
     expect(serialized).toEqual({
       rawText: prompt,
       scope: {
         pointers: { foo: 0 },
         stash: ['foo'],
       },
+      completed: false,
+      didStart: true,
       adapterType: 'default',
       compilerOptions: {},
       globalConfig: {
@@ -79,16 +91,18 @@ describe('serialize chain', async () => {
     `)
 
     const chain = new Chain({ prompt, adapter: Adapters.openai })
-
     await chain.step()
     await chain.step('First step response')
     const serialized = chain.serialize()
+
     expect(serialized).toEqual({
       rawText: prompt,
       scope: {
         pointers: { foo: 0 },
         stash: [6],
       },
+      completed: false,
+      didStart: true,
       adapterType: 'openai',
       compilerOptions: { includeSourceMap: false },
       globalConfig: undefined,
@@ -113,13 +127,15 @@ describe('serialize chain', async () => {
       adapter: Adapters.default,
       defaultRole: MessageRole.user,
     })
-
     await chain.step()
     const serialized = chain.serialize()
+
     expect(serialized).toEqual({
       rawText: prompt,
       adapterType: 'default',
       scope: { pointers: { name: 0 }, stash: ['Paco'] },
+      completed: false,
+      didStart: true,
       compilerOptions: { defaultRole: 'user' },
       ast: expect.any(Object),
       globalConfig: undefined,

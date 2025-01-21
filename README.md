@@ -51,3 +51,8 @@ This is just a small example of what PromptL can do. It is a powerful tool that 
 ## Links
 
 [Website](https://promptl.ai/) | [Documentation](https://docs.latitude.so/promptl/getting-started/introduction)
+
+## Development
+
+- To build the JavaScript library, run `pnpm build:lib`
+- To build the universal WASM module with RPC, first install [`javy`](https://github.com/bytecodealliance/javy/releases) and then run `pnpm build:rpc`
