@@ -40,7 +40,6 @@ console.log(inspect(conversation.messages, { depth: null }))
 async function createChain(prompt: string): Promise<any> {
   return await execute([
     {
-      id: 1,
       procedure: 'createChain',
       parameters: {
         prompt: prompt,
@@ -52,7 +51,6 @@ async function createChain(prompt: string): Promise<any> {
 async function stepChain(chain: any, response?: any): Promise<any> {
   return await execute([
     {
-      id: 1,
       procedure: 'stepChain',
       parameters: {
         chain: chain,

@@ -1,6 +1,18 @@
+# PromptL
+
+```sh
+npm install promptl-ai
+```
+
 ## What is PromptL?
 
 [PromptL](https://promptl.ai/) offers a common, easy-to-use syntax for defining dynamic prompts for LLMs. It is a simple, yet powerful language that allows you to define prompts in a human-readable format, while still being able to leverage the full power of LLMs.
+
+## PromptL in other languages
+
+Thanks to our [universal WASM module with RPC](examples/rpc.ts), you can use PromptL in any language that can run WASM natively or through a library. These are the official bindings:
+
+- [Python](https://github.com/latitude-dev/promptl-py)
 
 ## Why PromptL?
 
@@ -54,5 +66,6 @@ This is just a small example of what PromptL can do. It is a powerful tool that 
 
 ## Development
 
-- To build the JavaScript library, run `pnpm build:lib`
-- To build the universal WASM module with RPC, first install [`javy`](https://github.com/bytecodealliance/javy/releases) and then run `pnpm build:rpc`
+To build the JavaScript library, run `pnpm build:lib`.
+
+To build the universal WASM module with RPC, first install [`javy`](https://github.com/bytecodealliance/javy/releases) and then run `pnpm build:rpc`.

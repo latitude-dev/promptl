@@ -15,7 +15,6 @@ export namespace RPC {
   }
 
   export type Call<Parameters> = {
-    id: number
     procedure: Procedure
     parameters: Parameters
   }
@@ -36,7 +35,6 @@ export namespace RPC {
   }
 
   export type Result<Value> = {
-    id: number
     value?: Value
     error?: Error
   }
