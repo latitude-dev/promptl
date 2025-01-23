@@ -1,4 +1,4 @@
-import { scan, SerializedChain } from '../compiler'
+import { render, scan, SerializedChain } from '../compiler'
 import { Chain, StepResponse } from '../compiler/chain'
 import { AdapterKey, getAdapter } from '../providers'
 import { Message, MessageRole } from '../types'
@@ -18,6 +18,33 @@ export default {
       parameters: Array.from(result.parameters),
       isChain: result.isChain,
       includedPromptPaths: Array.from(result.includedPromptPaths),
+    }
+  },
+
+  [RPC.Procedure.RenderPrompt]: async ({
+    prompt,
+    parameters,
+    adapter,
+    defaultRole,
+    includeSourceMap,
+  }: {
+    prompt: string
+    parameters?: Record<string, unknown>
+    adapter?: AdapterKey
+    defaultRole?: MessageRole
+    includeSourceMap?: boolean
+  }) => {
+    const result = await render({
+      prompt: prompt,
+      parameters: parameters,
+      adapter: adapter ? getAdapter(adapter) : undefined,
+      defaultRole: defaultRole,
+      includeSourceMap: includeSourceMap,
+    })
+
+    return {
+      messages: result.messages,
+      config: result.config,
     }
   },
 

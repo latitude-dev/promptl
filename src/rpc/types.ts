@@ -10,6 +10,7 @@ declare global {
 export namespace RPC {
   export const enum Procedure {
     ScanPrompt = 'scanPrompt',
+    RenderPrompt = 'renderPrompt',
     CreateChain = 'createChain',
     StepChain = 'stepChain',
   }
