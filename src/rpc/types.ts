@@ -23,6 +23,7 @@ export namespace RPC {
     ReceiveError = 'RECEIVE_ERROR',
     ExecuteError = 'EXECUTE_ERROR',
     SendError = 'SEND_ERROR',
+    ProcedureError = 'PROCEDURE_ERROR',
     UnknownError = 'UNKNOWN_ERROR',
   }
 
