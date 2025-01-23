@@ -24,7 +24,6 @@ export namespace RPC {
     ExecuteError = 'EXECUTE_ERROR',
     SendError = 'SEND_ERROR',
     ProcedureError = 'PROCEDURE_ERROR',
-    UnknownProcedure = 'UNKNOWN_PROCEDURE',
     UnknownError = 'UNKNOWN_ERROR',
   }
 
