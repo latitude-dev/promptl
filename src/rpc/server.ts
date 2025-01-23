@@ -9,6 +9,9 @@ const enum Fd {
 
 const CHUNK_SIZE = 1024
 
+const decoder = new TextDecoder()
+const encoder = new TextEncoder()
+
 function receive(): RPC.Call<any>[] {
   const chunks = []
   let size = 0
@@ -35,11 +38,33 @@ function receive(): RPC.Call<any>[] {
     { offset: 0, calls: new Uint8Array(size) },
   )
 
-  return JSON.parse(new TextDecoder().decode(calls).trim())
+  const payload = JSON.parse(decoder.decode(calls).trim())
+
+  return payload
+}
+
+function jsonReplacer(_key: string, value: any): any {
+  if (value instanceof Error) {
+    const error: Record<string, any> = {}
+
+    for (const name of Object.getOwnPropertyNames(value)) {
+      const property = (value as any)[name]
+
+      if (property instanceof Error) {
+        error[name] = jsonReplacer(name, property)
+      } else {
+        error[name] = property
+      }
+    }
+
+    return error
+  }
+
+  return value
 }
 
 function send(results: RPC.Result<any>[]) {
-  const payload = new TextEncoder().encode(JSON.stringify(results) + '\n')
+  const payload = encoder.encode(JSON.stringify(results, jsonReplacer) + '\n')
 
   Javy.IO.writeSync(Fd.StdOut, payload)
 }
@@ -52,7 +77,7 @@ async function execute(calls: RPC.Call<any>[]): Promise<RPC.Result<any>[]> {
     if (!handler) {
       results.push({
         error: {
-          code: RPC.ErrorCode.UnknownProcedure,
+          code: RPC.ErrorCode.ExecuteError,
           message: `Unknown RPC procedure: ${call.procedure}`,
         },
       })
@@ -63,12 +88,12 @@ async function execute(calls: RPC.Call<any>[]): Promise<RPC.Result<any>[]> {
       results.push({
         value: await handler(call.parameters),
       })
-    } catch (error) {
+    } catch (error: any) {
       results.push({
         error: {
-          code: RPC.ErrorCode.ProcedureError,
-          message: error instanceof Error ? error.message : String(error),
-          details: error as any,
+          code: RPC.ErrorCode.ExecuteError,
+          message: `Failed to execute RPC procedure: ${call.procedure}: ${error.message || String(error)}`,
+          details: error,
         },
       })
     }
@@ -82,12 +107,12 @@ export function serve() {
 
   try {
     calls = receive()
-  } catch (error) {
+  } catch (error: any) {
     send([
       {
         error: {
           code: RPC.ErrorCode.ReceiveError,
-          message: `Failed to unmarshal RPC calls: ${error instanceof Error ? error.message : String(error)}`,
+          message: `Failed to unmarshal RPC calls: ${error.message || String(error)}`,
         },
       },
     ])
@@ -98,23 +123,23 @@ export function serve() {
     .then((results) => {
       try {
         send(results)
-      } catch (error) {
+      } catch (error: any) {
         send([
           {
             error: {
               code: RPC.ErrorCode.SendError,
-              message: `Failed to marshal RPC results: ${error instanceof Error ? error.message : String(error)}`,
+              message: `Failed to marshal RPC results: ${error.message || String(error)}`,
             },
           },
         ])
       }
     })
-    .catch((error) => {
+    .catch((error: any) => {
       send([
         {
           error: {
             code: RPC.ErrorCode.ExecuteError,
-            message: `Failed to execute RPC calls: ${error instanceof Error ? error.message : String(error)}`,
+            message: `Failed to execute RPC procedures: ${error.message || String(error)}`,
           },
         },
       ])
