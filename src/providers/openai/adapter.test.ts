@@ -92,7 +92,7 @@ describe('OpenAI adapter', async () => {
 
   it('adapts tool messages', async () => {
     const prompt = removeCommonIndent(`
-      <tool id="1234">
+      <tool id="1234" name="temperature">
         17ºC
       </tool>
     `)
@@ -102,6 +102,7 @@ describe('OpenAI adapter', async () => {
       {
         role: MessageRole.tool,
         tool_call_id: '1234',
+        toolName: 'temperature',
         content: [{ type: 'text', text: '17ºC' }],
       },
     ])

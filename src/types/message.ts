@@ -86,6 +86,7 @@ export type AssistantMessage = IMessage & {
 
 export type ToolMessage = IMessage & {
   role: MessageRole.tool
+  toolName: string
   toolId: string
 }
 

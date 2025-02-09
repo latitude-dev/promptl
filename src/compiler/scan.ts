@@ -484,6 +484,11 @@ export class Scan {
           return
         }
 
+        if (role === MessageRole.tool && !attributes.has('name')) {
+          this.baseNodeError(errors.toolMessageWithoutName, node)
+          return
+        }
+
         if (this.accumulatedToolCalls.length > 0) {
           this.accumulatedToolCalls.forEach((toolCallNode) => {
             this.baseNodeError(errors.invalidToolCallPlacement, toolCallNode)

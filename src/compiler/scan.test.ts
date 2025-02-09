@@ -725,4 +725,30 @@ describe('syntax errors', async () => {
 
     expect(metadata.errors.length).toBe(0)
   })
+
+  it('throw error if tool does not have id', async () => {
+    const prompt = removeCommonIndent(`
+      <tool>Tool 1</tool>
+    `)
+
+    const metadata = await scan({ prompt })
+
+    expect(metadata.errors).toEqual([
+      new CompileError('Tool messages must have an id attribute'),
+    ])
+  })
+
+  it('throw error if tool does not have name', async () => {
+    const prompt = removeCommonIndent(`
+      <tool id="1">Tool 1</tool>
+    `)
+
+    const metadata = await scan({ prompt })
+
+    expect(metadata.errors).toEqual([
+      new CompileError(
+        'Tool messages must have a name attribute equal to the tool name used in tool-call',
+      ),
+    ])
+  })
 })

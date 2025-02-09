@@ -103,8 +103,14 @@ function buildMessage<R extends MessageRole>(
       baseNodeError(errors.toolMessageWithoutId, node)
     }
 
+    if (attributes.name === undefined) {
+      baseNodeError(errors.toolMessageWithoutName, node)
+    }
+
     message.toolId = String(attributes.id)
+    message.toolName = String(attributes.name)
     delete message['id']
+    delete message['name']
   }
 
   return message
