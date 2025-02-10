@@ -1,7 +1,7 @@
 // Run `pnpm build:rpc` before running this example
 
 import assert from 'node:assert'
-import { FileHandle, mkdir, open, readFile, writeFile } from 'node:fs/promises'
+import { type FileHandle, mkdir, open, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { inspect } from 'node:util'
