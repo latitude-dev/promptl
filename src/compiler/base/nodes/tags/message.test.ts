@@ -268,4 +268,30 @@ describe('message contents', async () => {
       },
     ])
   })
+    it('parse <tool> tag', async () => {
+    const prompt = `
+      <tool name="tool1" id="1">Tool 1</tool>
+      <tool name="tool2" id="2">Tool 2</tool>
+    `
+    const result = await render({
+      prompt: removeCommonIndent(prompt),
+      parameters: {},
+      adapter: Adapters.default,
+    })
+    expect(result.messages.length).toBe(2)
+    expect(result.messages).toEqual([
+      {
+        toolId: '1',
+        toolName: 'tool1',
+        role: 'tool',
+        content: [{ type: 'text', text: 'Tool 1' }],
+      },
+      {
+        toolId: '2',
+        toolName: 'tool2',
+        role: 'tool',
+        content: [{ type: 'text', text: 'Tool 2' }],
+      },
+    ])
+  })
 })

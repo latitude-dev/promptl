@@ -60,6 +60,7 @@ export default [
       'yaml',
       'crypto',
       'zod',
+      'fast-sha256',
     ],
   },
   {

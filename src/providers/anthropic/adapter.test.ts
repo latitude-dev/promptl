@@ -91,7 +91,7 @@ describe('Anthropic adapter', async () => {
 
   it('adapts tool messages', async () => {
     const prompt = removeCommonIndent(`
-      <tool id="1234">
+      <tool id="1234" name="temperature">
         17ºC
       </tool>
     `)
@@ -99,6 +99,7 @@ describe('Anthropic adapter', async () => {
     const { messages } = await render({ prompt, adapter: Adapters.anthropic })
     expect(messages).toEqual([
       {
+        toolName: 'temperature',
         role: MessageRole.user,
         content: [
           {

@@ -169,6 +169,11 @@ export default {
     code: 'tool-message-without-id',
     message: 'Tool messages must have an id attribute',
   },
+  toolMessageWithoutName: {
+    code: 'tool-message-without-name',
+    message:
+      'Tool messages must have a name attribute equal to the tool name used in tool-call',
+  },
   toolCallWithoutName: {
     code: 'tool-call-without-name',
     message: 'Tool calls must have a name attribute',
