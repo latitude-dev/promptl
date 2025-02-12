@@ -336,6 +336,16 @@ describe('config', async () => {
     expect(metadata.config).toEqual({})
   })
 
+  it('does not crash with unresolved alias', async () => {
+    const metadata = await scan({
+      prompt: `---*alias
+      ---`,
+    })
+
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('invalid-config')
+  })
+
   it('fails when there is content before the config section', async () => {
     const prompt = removeCommonIndent(`
       Lorem ipsum
