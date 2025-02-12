@@ -297,9 +297,10 @@ export class Scan {
         })
       }
 
-      const parsedObj = parsedYaml.toJS() ?? {}
+      let parsedObj = {}
 
       try {
+        parsedObj = parsedYaml.toJS() ?? {}
         this.configSchema?.parse(parsedObj)
       } catch (err) {
         if (err instanceof z.ZodError) {
@@ -323,6 +324,8 @@ export class Scan {
               end: errorEnd,
             })
           })
+        } else if (err instanceof ReferenceError) {
+          this.baseNodeError(errors.invalidConfig(err.message), node)
         }
       }
 
