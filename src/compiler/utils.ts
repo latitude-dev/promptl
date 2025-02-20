@@ -9,6 +9,7 @@ import {
 } from '$promptl/parser/interfaces'
 import { ContentTypeTagName, MessageRole } from '$promptl/types'
 import { Scalar, Node as YAMLItem, YAMLMap, YAMLSeq } from 'yaml'
+import { ZodError } from 'zod'
 
 export function isIterable(obj: unknown): obj is Iterable<unknown> {
   return (obj as Iterable<unknown>)?.[Symbol.iterator] !== undefined
@@ -97,4 +98,14 @@ export function findYAMLItemPosition(
 
   if (!child) return parentRange
   return findYAMLItemPosition(child, path.slice(1)) ?? parentRange
+}
+
+export function isZodError(error: unknown): error is ZodError {
+  if (!(error instanceof Error)) return false
+
+  if (error instanceof ZodError) return true
+  if (error.constructor.name === 'ZodError') return true
+  if ('issues' in error && error.issues instanceof Array) return true
+
+  return false
 }

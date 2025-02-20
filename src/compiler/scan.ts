@@ -37,6 +37,7 @@ import {
   isMessageTag,
   isRefTag,
   isScopeTag,
+  isZodError,
 } from './utils'
 
 function copyScopeContext(scopeContext: ScopeContext): ScopeContext {
@@ -303,7 +304,7 @@ export class Scan {
         parsedObj = parsedYaml.toJS() ?? {}
         this.configSchema?.parse(parsedObj)
       } catch (err) {
-        if (err instanceof z.ZodError) {
+        if (isZodError(err)) {
           err.errors.forEach((error) => {
             const issue = error.message
 
