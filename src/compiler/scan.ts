@@ -54,6 +54,7 @@ export class Scan {
   private referenceFn?: ReferencePromptFn
   private fullPath: string
   private withParameters?: string[]
+  private requireConfig: boolean
   private configSchema?: z.ZodType
 
   private config?: Config
@@ -75,17 +76,20 @@ export class Scan {
     referenceFn,
     withParameters,
     configSchema,
+    requireConfig,
   }: {
     document: Document
     referenceFn?: ReferencePromptFn
     withParameters?: string[]
     configSchema?: z.ZodType
+    requireConfig?: boolean
   }) {
     this.rawText = document.content
     this.referenceFn = referenceFn
     this.fullPath = document.path
     this.withParameters = withParameters
     this.configSchema = configSchema
+    this.requireConfig = requireConfig ?? false
 
     this.resolvedPrompt = document.content
     this.includedPromptPaths = new Set([this.fullPath])
@@ -123,7 +127,7 @@ export class Scan {
       isRoot: true,
     })
 
-    if (this.configSchema && !this.config) {
+    if (this.requireConfig && !this.config) {
       this.baseNodeError(errors.missingConfig, fragment, { start: 0, end: 0 })
     }
 

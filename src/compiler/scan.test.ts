@@ -397,7 +397,25 @@ describe('config', async () => {
     expect(metadata.errors[0]!.code).toBe('config-already-declared')
   })
 
-  it('fails when a schema is provided and there is no config section', async () => {
+  it('fails when the configuration is required and there is no config section', async () => {
+    const prompt = removeCommonIndent(`
+      Lorem ipsum
+    `)
+
+    const metadata = await scan({
+      prompt,
+      configSchema: z.object({
+        foo: z.string(),
+      }),
+      requireConfig: true,
+    })
+
+    expect(metadata.errors.length).toBe(1)
+    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
+    expect(metadata.errors[0]!.code).toBe('config-not-found')
+  })
+
+  it('does not fail when no config section is present and it is not required', async () => {
     const prompt = removeCommonIndent(`
       Lorem ipsum
     `)
@@ -409,12 +427,10 @@ describe('config', async () => {
       }),
     })
 
-    expect(metadata.errors.length).toBe(1)
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
-    expect(metadata.errors[0]!.code).toBe('config-not-found')
+    expect(metadata.errors.length).toBe(0)
   })
 
-  it('fails when the configSchema is not validated', async () => {
+  it('fails when the configSchema is not validated, even if config is not required', async () => {
     const prompt = removeCommonIndent(`
       ---
       foo: 2

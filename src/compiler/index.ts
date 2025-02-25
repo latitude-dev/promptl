@@ -43,18 +43,21 @@ export function scan({
   referenceFn,
   withParameters,
   configSchema,
+  requireConfig,
 }: {
   prompt: string
   fullPath?: string
   referenceFn?: ReferencePromptFn
   withParameters?: string[]
   configSchema?: z.ZodType
+  requireConfig?: boolean
 }): Promise<ConversationMetadata> {
   return new Scan({
     document: { path: fullPath ?? '', content: prompt },
     referenceFn,
     withParameters,
     configSchema,
+    requireConfig,
   }).run()
 }
 
