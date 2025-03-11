@@ -22,3 +22,4 @@ export type ConversationMetadata = {
 
 export { type SerializedChain } from '$promptl/compiler'
 export * from './message'
+export * from './customTypes'

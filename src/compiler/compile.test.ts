@@ -6,6 +6,7 @@ import {
   MessageContent,
   MessageRole,
   TextContent,
+  toPromptLFile,
 } from '$promptl/types'
 import { describe, expect, it } from 'vitest'
 
@@ -923,5 +924,121 @@ Given a context, answer questions succintly yet complete.
         },
       ])
     })
+  })
+})
+
+describe('promptL files', async () => {
+  it('automatically adds interpolated promptL files as content tags', async () => {
+    const prompt = `
+      Take a look at this file: {{ file }}. What does it contain?
+    `
+
+    const file: File = new Blob(['Hello, world!'], {
+      type: 'text/plain',
+    }) as File
+    const url = 'https://example.com/file.txt'
+
+    const promptLFile = toPromptLFile({ file, url })
+
+    const { messages } = await render({
+      prompt: removeCommonIndent(prompt),
+      parameters: { file: promptLFile },
+      adapter: Adapters.default,
+    })
+
+    expect(messages).toEqual([
+      {
+        role: MessageRole.system,
+        content: [
+          {
+            type: ContentType.text,
+            text: 'Take a look at this file:',
+          },
+          {
+            type: ContentType.file,
+            file: 'https://example.com/file.txt',
+            mimeType: 'text/plain',
+          },
+          {
+            type: ContentType.text,
+            text: '. What does it contain?',
+          },
+        ],
+      },
+    ])
+  })
+
+  it('automatically adds promptL files as images when the file is an image', async () => {
+    const prompt = `
+      Look how pretty I am: {{ selfie }}
+    `
+
+    const file: File = new Blob(['Hello, world!'], {
+      type: 'image/png',
+    }) as File
+
+    const url = 'https://example.com/selfie.png'
+    const promptLFile = toPromptLFile({ file, url })
+
+    const { messages } = await render({
+      prompt: removeCommonIndent(prompt),
+      parameters: { selfie: promptLFile },
+      adapter: Adapters.default,
+    })
+
+    expect(messages).toEqual([
+      {
+        role: MessageRole.system,
+        content: [
+          {
+            type: ContentType.text,
+            text: 'Look how pretty I am:',
+          },
+          {
+            type: ContentType.image,
+            image: 'https://example.com/selfie.png',
+          },
+        ],
+      },
+    ])
+  })
+
+  it('a promptlfile inside a content tag only adds the url', async () => {
+    const prompt = `
+      This is a file:
+      <content-file mime="text/plain">
+        {{ file }}
+      </content-file>
+    `
+
+    const file: File = new Blob(['Hello, world!'], {
+      type: 'text/plain',
+    }) as File
+    const url = 'https://example.com/file.txt'
+
+    const promptLFile = toPromptLFile({ file, url })
+
+    const { messages } = await render({
+      prompt: removeCommonIndent(prompt),
+      parameters: { file: promptLFile },
+      adapter: Adapters.default,
+    })
+
+    expect(messages).toEqual([
+      {
+        role: MessageRole.system,
+        content: [
+          {
+            type: ContentType.text,
+            text: 'This is a file:',
+          },
+          {
+            type: ContentType.file,
+            file: 'https://example.com/file.txt',
+            mimeType: 'text/plain',
+          },
+        ],
+      },
+    ])
   })
 })

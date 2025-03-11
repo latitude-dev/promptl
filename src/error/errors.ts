@@ -239,6 +239,10 @@ export default {
     code: 'invalid-content-type',
     message: `Invalid content type: ${name}`,
   }),
+  emptyContentTag: {
+    code: 'empty-content-tag',
+    message: 'Content tags cannot be empty',
+  },
   invalidReferencePath: {
     code: 'invalid-reference-path',
     message: 'Reference path must be a string',
