@@ -67,7 +67,11 @@ export async function compile(
     return
   }
 
-  if (type === ContentType.image && stray.text.length > 0) {
+  if (type === ContentType.image) {
+    if (!stray.text.length) {
+      baseNodeError(errors.emptyContentTag, node)
+    }
+
     addContent({
       node,
       content: {
@@ -80,7 +84,11 @@ export async function compile(
     return
   }
 
-  if (type === ContentType.file && stray.text.length > 0) {
+  if (type === ContentType.file) {
+    if (!stray.text.length) {
+      baseNodeError(errors.emptyContentTag, node)
+    }
+
     const { mime: mimeType, ...rest } = attributes
     if (!mimeType) baseNodeError(errors.fileTagWithoutMimeType, node)
 
