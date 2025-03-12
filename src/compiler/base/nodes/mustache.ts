@@ -1,9 +1,9 @@
+import errors from '$promptl/error/errors'
 import { MustacheTag } from '$promptl/parser/interfaces'
 import {
-  ContentType,
   isPromptLFile,
-  MessageContent,
   PromptLFile,
+  promptLFileToMessageContent,
 } from '$promptl/types'
 
 import { CompileNodeContext } from '../types'
@@ -16,22 +16,32 @@ export async function compile({
   isInsideContentTag,
   addContent,
   resolveExpression,
+  baseNodeError,
 }: CompileNodeContext<MustacheTag>) {
   const expression = node.expression
   const value = await resolveExpression(expression, scope)
   if (value === undefined) return
 
-  if (isPromptLFile(value)) {
+  const files = promptLFileArray(value)
+  if (files) {
     if (isInsideContentTag) {
-      addStrayText(String(value.url), node)
+      if (files.length > 1) {
+        baseNodeError(errors.multipleFilesInContentTag, node)
+        return
+      }
+
+      const file = files[0]!
+      addStrayText(String(file.url), node)
       return
     }
 
     groupStrayText()
 
-    addContent({
-      node,
-      content: getPromptLFileContent(value),
+    files.forEach((file) => {
+      addContent({
+        node,
+        content: promptLFileToMessageContent(file),
+      })
     })
 
     return
@@ -45,17 +55,10 @@ export async function compile({
   addStrayText(String(value), node)
 }
 
-function getPromptLFileContent(file: PromptLFile): MessageContent {
-  if (file.isImage) {
-    return {
-      type: ContentType.image,
-      image: file.url!,
-    }
+function promptLFileArray(value: unknown): PromptLFile[] | undefined {
+  if (isPromptLFile(value)) return [value]
+  if (Array.isArray(value) && value.length && value.every(isPromptLFile)) {
+    return value
   }
-
-  return {
-    type: ContentType.file,
-    mimeType: file.mimeType,
-    file: file.url!,
-  }
+  return undefined
 }

@@ -1041,4 +1041,58 @@ describe('promptL files', async () => {
       },
     ])
   })
+
+  it('adds arrays of promptL files as multiple content tags', async () => {
+    const prompt = `
+      Look at these files:
+      {{ files }}
+    `
+    const files: File[] = [
+      new Blob(['TEXT'], { type: 'text/plain' }) as File,
+      new Blob(['PNG'], { type: 'image/png' }) as File,
+      new Blob(['PDF'], { type: 'application/pdf' }) as File,
+    ]
+
+    const urls = [
+      'https://example.com/file.txt',
+      'https://example.com/file.png',
+      'https://example.com/file.pdf',
+    ]
+
+    const promptLFiles = files.map((file, i) =>
+      toPromptLFile({ file, url: urls[i]! }),
+    )
+
+    const { messages } = await render({
+      prompt: removeCommonIndent(prompt),
+      parameters: { files: promptLFiles },
+      adapter: Adapters.default,
+    })
+
+    expect(messages).toEqual([
+      {
+        role: MessageRole.system,
+        content: [
+          {
+            type: ContentType.text,
+            text: 'Look at these files:',
+          },
+          {
+            type: ContentType.file,
+            file: 'https://example.com/file.txt',
+            mimeType: 'text/plain',
+          },
+          {
+            type: ContentType.image,
+            image: 'https://example.com/file.png',
+          },
+          {
+            type: ContentType.file,
+            file: 'https://example.com/file.pdf',
+            mimeType: 'application/pdf',
+          },
+        ],
+      },
+    ])
+  })
 })

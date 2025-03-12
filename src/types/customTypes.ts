@@ -1,3 +1,5 @@
+import { ContentType, FileContent, ImageContent } from './message'
+
 /**
  * Custom file type for PromptL.
  * It contains redundant information to make it easier to use.
@@ -24,7 +26,7 @@ export function toPromptLFile({
   file,
   url,
 }: {
-  file: File
+  file: File | { type: string; size: number; name: string }
   url: string
 }): PromptLFile {
   const mimeType = file.type
@@ -56,4 +58,21 @@ export function isPromptLFile(value: unknown): value is PromptLFile {
     '__promptlType' in value &&
     (value as Record<string, unknown>).__promptlType === 'file'
   )
+}
+
+export function promptLFileToMessageContent(
+  file: PromptLFile,
+): FileContent | ImageContent {
+  if (file.isImage) {
+    return {
+      type: ContentType.image,
+      image: file.url,
+    }
+  }
+
+  return {
+    type: ContentType.file,
+    mimeType: file.mimeType,
+    file: file.url,
+  }
 }
