@@ -243,6 +243,10 @@ export default {
     code: 'empty-content-tag',
     message: 'Content tags cannot be empty',
   },
+  multipleFilesInContentTag: {
+    code: 'multiple-files-in-content-tag',
+    message: 'Content tags can only contain one file',
+  },
   invalidReferencePath: {
     code: 'invalid-reference-path',
     message: 'Reference path must be a string',
