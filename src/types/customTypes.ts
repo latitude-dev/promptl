@@ -26,7 +26,7 @@ export function toPromptLFile({
   file,
   url,
 }: {
-  file: File | { type: string; size: number; name: string }
+  file: { type: string; size: number; name: string }
   url: string
 }): PromptLFile {
   const mimeType = file.type

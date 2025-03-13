@@ -933,9 +933,7 @@ describe('promptL files', async () => {
       Take a look at this file: {{ file }}. What does it contain?
     `
 
-    const file: File = new Blob(['Hello, world!'], {
-      type: 'text/plain',
-    }) as File
+    const file = { name: 'file.txt', size: 12, type: 'text/plain' }
     const url = 'https://example.com/file.txt'
 
     const promptLFile = toPromptLFile({ file, url })
@@ -973,9 +971,7 @@ describe('promptL files', async () => {
       Look how pretty I am: {{ selfie }}
     `
 
-    const file: File = new Blob(['Hello, world!'], {
-      type: 'image/png',
-    }) as File
+    const file = { name: 'selfie.png', size: 12, type: 'image/png' }
 
     const url = 'https://example.com/selfie.png'
     const promptLFile = toPromptLFile({ file, url })
@@ -1011,9 +1007,7 @@ describe('promptL files', async () => {
       </content-file>
     `
 
-    const file: File = new Blob(['Hello, world!'], {
-      type: 'text/plain',
-    }) as File
+    const file = { name: 'file.txt', size: 12, type: 'text/plain' }
     const url = 'https://example.com/file.txt'
 
     const promptLFile = toPromptLFile({ file, url })
@@ -1047,16 +1041,16 @@ describe('promptL files', async () => {
       Look at these files:
       {{ files }}
     `
-    const files: File[] = [
-      new Blob(['TEXT'], { type: 'text/plain' }) as File,
-      new Blob(['PNG'], { type: 'image/png' }) as File,
-      new Blob(['PDF'], { type: 'application/pdf' }) as File,
+    const files: { type: string; size: number; name: string }[] = [
+      { name: 'file.txt', size: 12, type: 'text/plain' },
+      { name: 'selfie.png', size: 12, type: 'image/png' },
+      { name: 'document.pdf', size: 34, type: 'application/pdf' },
     ]
 
     const urls = [
       'https://example.com/file.txt',
-      'https://example.com/file.png',
-      'https://example.com/file.pdf',
+      'https://example.com/selfie.png',
+      'https://example.com/document.pdf',
     ]
 
     const promptLFiles = files.map((file, i) =>
@@ -1084,11 +1078,11 @@ describe('promptL files', async () => {
           },
           {
             type: ContentType.image,
-            image: 'https://example.com/file.png',
+            image: 'https://example.com/selfie.png',
           },
           {
             type: ContentType.file,
-            file: 'https://example.com/file.pdf',
+            file: 'https://example.com/document.pdf',
             mimeType: 'application/pdf',
           },
         ],
