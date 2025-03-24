@@ -39,7 +39,9 @@ export const OpenAIAdapter: ProviderAdapter<OpenAIMessage> = {
     const toolRequestsNamesById: Map<string, string> = new Map()
     return {
       config: openAiConversation.config,
-      messages: openAiConversation.messages.map(openAiToPromptl(toolRequestsNamesById)),
+      messages: openAiConversation.messages.map(
+        openAiToPromptl(toolRequestsNamesById),
+      ),
     }
   },
 }
@@ -163,24 +165,26 @@ function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
   throw new Error(`Unsupported message role: ${message.role}`)
 }
 
-const openAiToPromptl = (toolRequestsNamesById: Map<string, string>) => (message: OpenAIMessage): PromptlMessage => {
-  const content: MessageContent[] = []
-  if (typeof message.content === 'string') {
-    content.push({ type: ContentType.text, text: message.content })
-  } else {
-    content.push(
-      ...message.content.map((c) => {
-        if (c.type === OpenAIContentType.input_audio) return toPromptlFile(c)
-        return c as unknown as MessageContent
-      }),
-    )
-  }
+const openAiToPromptl =
+  (toolRequestsNamesById: Map<string, string>) =>
+  (message: OpenAIMessage): PromptlMessage => {
+    const content: MessageContent[] = []
 
-  if (message.role === MessageRole.assistant) {
-    const toolCalls: OpenAIToolCall[] = message.tool_calls || []
-    content.push(
-      ...toolCalls.map(
-        (tc) => {
+    if (typeof message.content === 'string') {
+      content.push({ type: ContentType.text, text: message.content })
+    } else if (Array.isArray(message.content)) {
+      content.push(
+        ...message.content.map((c) => {
+          if (c.type === OpenAIContentType.input_audio) return toPromptlFile(c)
+          return c as unknown as MessageContent
+        }),
+      )
+    }
+
+    if (message.role === MessageRole.assistant) {
+      const toolCalls: OpenAIToolCall[] = message.tool_calls || []
+      content.push(
+        ...toolCalls.map((tc) => {
           toolRequestsNamesById.set(tc.id, tc.function.name)
           return {
             type: ContentType.toolCall,
@@ -188,23 +192,22 @@ const openAiToPromptl = (toolRequestsNamesById: Map<string, string>) => (message
             toolName: tc.function.name,
             toolArguments: JSON.parse(tc.function.arguments),
           } as ToolCallContent
-        }
-      ),
-    )
-  }
+        }),
+      )
+    }
 
-  if (message.role === MessageRole.tool) {
-    const { tool_call_id, content: _, ...rest } = message
+    if (message.role === MessageRole.tool) {
+      const { tool_call_id, content: _, ...rest } = message
+      return {
+        toolId: tool_call_id,
+        toolName: toolRequestsNamesById.get(tool_call_id) ?? '',
+        content,
+        ...rest,
+      }
+    }
+
     return {
-      toolId: tool_call_id,
-      toolName: toolRequestsNamesById.get(tool_call_id) ?? '',
+      ...message,
       content,
-      ...rest,
     }
   }
-
-  return {
-    ...message,
-    content,
-  }
-}
