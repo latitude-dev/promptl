@@ -296,4 +296,10 @@ export default {
     message:
       'Response tags cannot have children.\nIf you need to add content to the response context, just add it before the response tag.',
   },
+  invalidStepResponseFormat: (error: Error) => {
+    return {
+      code: 'invalid-step-response-format',
+      message: `Step response must be a valid JSON object: ${error.message}`,
+    }
+  },
 }

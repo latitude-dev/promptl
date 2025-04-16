@@ -45,7 +45,13 @@ async function createChain(prompt: string): Promise<any> {
         prompt: prompt,
       },
     },
-  ]).then((result) => result[0]!.value)
+  ]).then((result) => {
+    if (result[0]!.error) {
+      console.log('Error dump: ', inspect(result[0]!.error, { depth: null }))
+      throw new Error(result[0]!.error.message)
+    }
+    return result[0]!.value
+  })
 }
 
 async function stepChain(chain: any, response?: any): Promise<any> {
@@ -57,7 +63,13 @@ async function stepChain(chain: any, response?: any): Promise<any> {
         response: response,
       },
     },
-  ]).then((result) => result[0]!.value)
+  ]).then((result) => {
+    if (result[0]!.error) {
+      console.log('Error dump: ', inspect(result[0]!.error, { depth: null }))
+      throw new Error(result[0]!.error.message)
+    }
+    return result[0]!.value
+  })
 }
 
 async function execute(data: any): Promise<any> {

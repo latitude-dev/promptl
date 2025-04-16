@@ -78,7 +78,7 @@ export async function compile(
       try {
         responseVarValue = JSON.parse(responseVarValue.trim())
       } catch (error) {
-        baseNodeError(errors.functionCallError(error), node)
+        baseNodeError(errors.invalidStepResponseFormat(error as Error), node)
       }
     }
 
