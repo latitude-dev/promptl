@@ -97,7 +97,7 @@ describe("step tags", async () => {
     const error = await getExpectedError(() => complete({ chain, callback: async () => `
       Bad JSON.
     `.trim()}), CompileError)
-    expect(error.code).toBe('function-call-error')
+    expect(error.code).toBe('invalid-step-response-format')
 
     expect(mock).not.toHaveBeenCalled();
   });
