@@ -214,7 +214,10 @@ describe('resolvedPrompt', async () => {
   it('Replaces reference tags with scope tags', async () => {
     const prompt = removeCommonIndent(`
       This is a prompt.
-      <prompt path="child" bar={{ foo }} />
+      <prompt
+        path="child"
+        bar={{ foo }}
+      />
       This is another prompt.
     `)
 

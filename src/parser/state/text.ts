@@ -3,6 +3,7 @@ import { type Parser } from '$promptl/parser'
 import type { Text } from '$promptl/parser/interfaces'
 
 const RESERVED_DELIMITERS = [CUSTOM_TAG_START, '/*', '<!--']
+const WHITESPACE_CHARS = [' ', '\n', '\r', '\t']
 
 function matchesReservedTag(template: string, index: number): boolean {
   if (template[index] !== '<') return false
@@ -13,7 +14,7 @@ function matchesReservedTag(template: string, index: number): boolean {
   for (const tag of RESERVED_TAGS) {
     if (
       template.startsWith(tag, tagStart) &&
-      (template[tagStart + tag.length] === ' ' ||
+      (WHITESPACE_CHARS.includes(template[tagStart + tag.length] as string) ||
         template[tagStart + tag.length] === '/' ||
         template[tagStart + tag.length] === '>' ||
         tagStart + tag.length === template.length)
