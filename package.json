@@ -1,6 +1,6 @@
 {
   "name": "promptl-ai",
-  "version": "0.5.6",
+  "version": "0.6.0",
   "author": "Latitude Data",
   "license": "MIT",
   "description": "Compiler for PromptL, the prompt language",
@@ -52,6 +52,7 @@
     "@types/node": "^20.12.12",
     "@typescript-eslint/eslint-plugin": "^8.19.0",
     "eslint": "^9.17.0",
+    "openai": "^4.98.0",
     "eslint-plugin-prettier": "^5.2.1",
     "globals": "^15.14.0",
     "prettier": "^3.4.2",

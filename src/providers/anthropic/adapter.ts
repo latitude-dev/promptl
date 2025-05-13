@@ -257,7 +257,6 @@ function promptlToAnthropic(message: PromptlMessage): AnthropicMessage {
     } as AnthropicUserMessage
   }
 
-  //@ts-expect-error — There are no more supported roles. Typescript knows it and is yelling me back
   throw new Error(`Unsupported message role: ${message.role}`)
 }
 

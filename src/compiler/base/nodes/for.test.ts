@@ -3,7 +3,7 @@ import { getExpectedError } from '$promptl/test/helpers'
 import { Message, MessageContent, TextContent } from '$promptl/types'
 import { describe, expect, it } from 'vitest'
 
-import { render } from '../..'
+import { render } from '../../index'
 import { removeCommonIndent } from '../../utils'
 
 async function getCompiledText(

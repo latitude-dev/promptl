@@ -153,6 +153,7 @@ function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
       tool_calls: toolCalls.length ? toolCalls : undefined,
     } as OpenAIAssistantMessage
   }
+
   if (message.role === MessageRole.tool) {
     const { toolId, ...rest } = message
     return {
@@ -161,7 +162,6 @@ function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
     } as unknown as OpenAIToolMessage
   }
 
-  //@ts-expect-error — There are no more supported roles. Typescript knows it and is yelling me back
   throw new Error(`Unsupported message role: ${message.role}`)
 }
 
