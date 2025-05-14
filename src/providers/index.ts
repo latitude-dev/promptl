@@ -1,3 +1,4 @@
+import { OpenAIResponsesAdapter } from '$promptl/providers/openai-responses/adapter'
 import { Message } from '$promptl/types'
 import { defaultAdapter, ProviderAdapter } from './adapter'
 import { AnthropicAdapter } from './anthropic/adapter'
@@ -8,6 +9,7 @@ export type { ProviderAdapter } from './adapter'
 export const Adapters = {
   default: defaultAdapter,
   openai: OpenAIAdapter,
+  openaiResponses: OpenAIResponsesAdapter,
   anthropic: AnthropicAdapter,
 } as const
 

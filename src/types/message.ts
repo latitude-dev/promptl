@@ -60,6 +60,7 @@ export type MessageContent =
 
 export enum MessageRole {
   system = 'system',
+  developer = 'developer',
   user = 'user',
   assistant = 'assistant',
   tool = 'tool',
@@ -73,6 +74,10 @@ interface IMessage {
 
 export type SystemMessage = IMessage & {
   role: MessageRole.system
+}
+
+export type DeveloperMessage = IMessage & {
+  role: MessageRole.developer
 }
 
 export type UserMessage = IMessage & {
@@ -92,6 +97,7 @@ export type ToolMessage = IMessage & {
 
 export type Message =
   | SystemMessage
+  | DeveloperMessage
   | UserMessage
   | AssistantMessage
   | ToolMessage

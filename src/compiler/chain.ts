@@ -27,12 +27,11 @@ type ChainStep<M extends AdapterMessageType> = ProviderConversation<M> & {
   completed: boolean
 }
 
+type HasRole<T> = 'role' extends keyof T ? { role?: T['role'] } : {}
 export type StepResponse<M extends AdapterMessageType> =
   | string
   | M[]
-  | (Omit<M, 'role'> & {
-      role?: M['role']
-    })
+  | (Omit<M, 'role'> & HasRole<M>)
 
 type BuildStepResponseContent = {
   messages?: Message[]
@@ -204,7 +203,7 @@ export class Chain<M extends AdapterMessageType = Message> {
 
     const responseMessage = {
       ...response,
-      role: response.role ?? MessageRole.assistant,
+      role: 'role' in response ? response.role : MessageRole.assistant,
     } as M
 
     const convertedMessages = this.adapter.toPromptl({
