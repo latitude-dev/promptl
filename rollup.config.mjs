@@ -53,6 +53,7 @@ export default [
       }),
     ],
     external: [
+      'openai',
       'acorn',
       'locate-character',
       'code-red',
