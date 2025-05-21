@@ -26,7 +26,7 @@ export default {
   input: 'src/index.rpc.ts',
   output: [
     {
-      file: 'dist/promptl.js',
+      file: 'dist-rpc/promptl.js',
       format: 'es',
     },
   ],
@@ -49,8 +49,8 @@ export default {
         '-J simd-json-builtins=y',
         '-J text-encoding=y',
         '-J event-loop=y',
-        '-o dist/promptl.wasm',
-        'dist/promptl.js',
+        '-o dist-rpc/promptl.wasm',
+        'dist-rpc/promptl.js',
       ].join(' '),
     ]),
   ],
