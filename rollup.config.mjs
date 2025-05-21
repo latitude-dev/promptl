@@ -35,15 +35,8 @@ export default [
     },
     input: 'src/index.ts',
     output: [
-      {
-        file: 'dist/index.js',
-        sourcemap: true,
-      },
-      {
-        file: 'dist/index.cjs',
-        format: 'cjs',
-        sourcemap: true,
-      },
+      { file: 'dist/index.js' },
+      { file: 'dist/index.cjs', format: 'cjs' },
     ],
     plugins: [
       typescript({

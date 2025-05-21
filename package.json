@@ -1,6 +1,6 @@
 {
   "name": "promptl-ai",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "author": "Latitude Data",
   "license": "MIT",
   "description": "Compiler for PromptL, the prompt language",
