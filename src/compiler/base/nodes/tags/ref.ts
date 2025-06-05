@@ -1,6 +1,6 @@
 import Scope from '$promptl/compiler/scope'
 import errors from '$promptl/error/errors'
-import parse from '$promptl/parser'
+import { parse } from '$promptl/parser'
 import { Fragment, ReferenceTag } from '$promptl/parser/interfaces'
 
 import { CompileNodeContext, TemplateNodeWithStatus } from '../../types'

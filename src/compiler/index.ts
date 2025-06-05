@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { Chain } from './chain'
 import { Scan } from './scan'
 import type { CompileOptions, Document, ReferencePromptFn } from './types'
+import { Fragment } from '$promptl/parser/interfaces'
 
 export async function render<M extends AdapterMessageType = Message>({
   prompt,
@@ -39,6 +40,7 @@ export function createChain({
 
 export function scan({
   prompt,
+  serialized,
   fullPath,
   referenceFn,
   withParameters,
@@ -46,6 +48,7 @@ export function scan({
   requireConfig,
 }: {
   prompt: string
+  serialized?: Fragment
   fullPath?: string
   referenceFn?: ReferencePromptFn
   withParameters?: string[]
@@ -54,6 +57,7 @@ export function scan({
 }): Promise<ConversationMetadata> {
   return new Scan({
     document: { path: fullPath ?? '', content: prompt },
+    serialized,
     referenceFn,
     withParameters,
     configSchema,

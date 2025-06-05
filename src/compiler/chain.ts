@@ -3,7 +3,7 @@ import {
   SerializedProps,
 } from '$promptl/compiler/deserializeChain'
 import { CHAIN_STEP_ISOLATED_ATTR } from '$promptl/constants'
-import parse from '$promptl/parser'
+import { parse } from '$promptl/parser'
 import { Fragment } from '$promptl/parser/interfaces'
 import {
   AdapterMessageType,
@@ -41,15 +41,14 @@ type BuildStepResponseContent = {
 export class Chain<M extends AdapterMessageType = Message> {
   public rawText: string
 
-  private compileOptions: CompileOptions
-  private ast: Fragment
-  private scope: Scope
-  private didStart: boolean = false
   private _completed: boolean = false
-
   private adapter: ProviderAdapter<M>
-  private globalMessages: Message[] = []
+  private ast: Fragment
+  private compileOptions: CompileOptions
+  private didStart: boolean = false
   private globalConfig: Config | undefined
+  private globalMessages: Message[] = []
+  private scope: Scope
   private wasLastStepIsolated: boolean = false
 
   static deserialize(args: SerializedProps) {
@@ -67,24 +66,21 @@ export class Chain<M extends AdapterMessageType = Message> {
     parameters?: Record<string, unknown>
     adapter?: ProviderAdapter<M>
     serialized?: {
-      ast: Fragment
-      scope: Scope
-      didStart: boolean
-      completed: boolean
-      globalConfig: Config | undefined
-      globalMessages: Message[]
+      ast?: Fragment
+      scope?: Scope
+      didStart?: boolean
+      completed?: boolean
+      globalConfig?: Config
+      globalMessages?: Message[]
     }
   } & CompileOptions) {
     this.rawText = prompt
-
-    // Init from a serialized chain
     this.ast = serialized?.ast ?? parse(prompt)
     this.scope = serialized?.scope ?? new Scope(parameters)
     this.didStart = serialized?.didStart ?? false
     this._completed = serialized?.completed ?? false
     this.globalConfig = serialized?.globalConfig
     this.globalMessages = serialized?.globalMessages ?? []
-
     this.adapter = adapter
     this.compileOptions = compileOptions
 
