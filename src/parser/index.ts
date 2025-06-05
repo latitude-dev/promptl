@@ -7,7 +7,7 @@ import type { BaseNode, Fragment } from './interfaces'
 import fragment from './state/fragment'
 import fullCharCodeAt from './utils/full_char_code_at'
 
-export default function parse(template: string) {
+export function parse(template: string) {
   return new Parser(template).parse()
 }
 

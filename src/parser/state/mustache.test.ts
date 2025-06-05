@@ -2,7 +2,7 @@ import CompileError from '$promptl/error/error'
 import { getExpectedError } from '$promptl/test/helpers'
 import { describe, expect, it } from 'vitest'
 
-import parse from '..'
+import { parse } from '..'
 import { TemplateNode } from '../interfaces'
 
 describe('Mustache', async () => {

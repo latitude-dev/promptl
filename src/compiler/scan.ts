@@ -8,7 +8,7 @@ import {
 } from '$promptl/constants'
 import CompileError, { error } from '$promptl/error/error'
 import errors from '$promptl/error/errors'
-import parse from '$promptl/parser/index'
+import { parse } from '$promptl/parser/index'
 import type {
   Attribute,
   BaseNode,
@@ -70,6 +70,7 @@ export class Scan {
   private references: { [from: string]: string[] } = {}
   private referencedHashes: string[] = []
   private referenceDepth: number = 0
+  private serialized?: Fragment
 
   constructor({
     document,
@@ -77,13 +78,16 @@ export class Scan {
     withParameters,
     configSchema,
     requireConfig,
+    serialized,
   }: {
     document: Document
     referenceFn?: ReferencePromptFn
     withParameters?: string[]
     configSchema?: z.ZodType
     requireConfig?: boolean
+    serialized?: Fragment
   }) {
+    this.serialized = serialized
     this.rawText = document.content
     this.referenceFn = referenceFn
     this.fullPath = document.path
@@ -107,7 +111,7 @@ export class Scan {
     let fragment: Fragment
 
     try {
-      fragment = parse(this.rawText)
+      fragment = this.serialized ?? parse(this.rawText)
     } catch (e) {
       const parseError = e as CompileError
       if (parseError instanceof CompileError) {
