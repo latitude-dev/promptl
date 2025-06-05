@@ -32,38 +32,49 @@ export function text(parser: Parser) {
   const template = parser.template
   const len = template.length
 
+  // Track escape state with a boolean instead of recounting backslashes
+  let isEscaped = false
+
   while (parser.index < len) {
     const char = template[parser.index]
 
-    let isEscaping = false
-    let backslashCount = 0
-    for (let i = data.length - 1; i >= 0 && data[i] === '\\'; i--)
-      backslashCount++
-    isEscaping = backslashCount % 2 === 1
-    if (isEscaping) data = data.slice(0, -1)
-
-    if (!isEscaping) {
-      if (
-        char === '-' &&
-        template[parser.index + 1] === '-' &&
-        template[parser.index + 2] === '-' &&
-        template[parser.index + 3] !== '-'
-      ) {
-        break
-      }
-
-      let delimiterMatched = false
-      for (const delim of RESERVED_DELIMITERS) {
-        if (template.startsWith(delim, parser.index)) {
-          delimiterMatched = true
-          break
-        }
-      }
-      if (delimiterMatched) break
-
-      if (matchesReservedTag(template, parser.index)) break
+    // Handle backslash: toggle escape state and only add it if already escaped
+    if (char === '\\' && !isEscaped) {
+      isEscaped = true
+      parser.index++
+      continue
     }
 
+    // If we're in escaped mode, add the current character regardless of what it is
+    if (isEscaped) {
+      data += char
+      parser.index++
+      isEscaped = false
+      continue
+    }
+
+    // Check break conditions (only when not escaped)
+    if (
+      char === '-' &&
+      template[parser.index + 1] === '-' &&
+      template[parser.index + 2] === '-' &&
+      template[parser.index + 3] !== '-'
+    ) {
+      break
+    }
+
+    let delimiterMatched = false
+    for (const delim of RESERVED_DELIMITERS) {
+      if (template.startsWith(delim, parser.index)) {
+        delimiterMatched = true
+        break
+      }
+    }
+    if (delimiterMatched) break
+
+    if (matchesReservedTag(template, parser.index)) break
+
+    // Handle dashes more efficiently
     if (char === '-') {
       let dashEnd = parser.index + 1
       while (dashEnd < len && template[dashEnd] === '-') dashEnd++
@@ -71,17 +82,20 @@ export function text(parser: Parser) {
       data += '-'.repeat(dashCount)
       parser.index = dashEnd
     } else {
+      // Normal character processing
       data += char
       parser.index++
     }
   }
 
+  // Create the text node with optimized data processing
+  // Since we're handling escape characters differently now, we can simplify this replacement
   const node = {
     start,
     end: parser.index,
     type: 'Text',
     raw: data,
-    data: data.replace(/(?<!\\)\\{{/g, '{{').replace(/(?<!\\)\\}}/g, '}}'),
+    data: data, // The escaping is already handled correctly during parsing
   } as Text
 
   parser.current().children!.push(node)
