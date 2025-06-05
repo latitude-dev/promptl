@@ -32,6 +32,7 @@ import { ScopeContext } from './scope'
 import { Document, ReferencePromptFn } from './types'
 import {
   findYAMLItemPosition,
+  getMostSpecificError,
   isChainStepTag,
   isContentTag,
   isMessageTag,
@@ -314,11 +315,11 @@ export class Scan {
       } catch (err) {
         if (isZodError(err)) {
           err.errors.forEach((error) => {
-            const issue = error.message
+            const { message, path } = getMostSpecificError(error)
 
             const range = findYAMLItemPosition(
               parsedYaml.contents as YAMLItem,
-              error.path,
+              path,
             )
 
             const errorStart = range
@@ -328,7 +329,7 @@ export class Scan {
               ? node.start! + CONFIG_START_OFFSET + range[1] + 1
               : node.end!
 
-            this.baseNodeError(errors.invalidConfig(issue), node, {
+            this.baseNodeError(errors.invalidConfig(message), node, {
               start: errorStart,
               end: errorEnd,
             })
