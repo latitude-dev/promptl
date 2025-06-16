@@ -43,7 +43,7 @@ importers:
         specifier: ^25.0.7
         version: 25.0.8(rollup@4.27.4)
       '@rollup/plugin-node-resolve':
-        specifier: ^15.2.3
+        specifier: ^15.3.1
         version: 15.3.1(rollup@4.27.4)
       '@rollup/plugin-typescript':
         specifier: ^11.1.6
