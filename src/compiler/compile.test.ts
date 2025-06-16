@@ -173,18 +173,12 @@ describe('variable assignment', async () => {
     expect(result).toBe('5')
   })
 
-  it('cannot reference undefined variables', async () => {
+  it('undefined variables do not cause an error', async () => {
     const prompt = `
       {{ foo }}
     `
-    const action = () =>
-      render({
-        prompt: removeCommonIndent(prompt),
-        parameters: {},
-        adapter: Adapters.default,
-      })
-    const error = await getExpectedError(action, CompileError)
-    expect(error.code).toBe('variable-not-declared')
+    const result = await getCompiledText(prompt)
+    expect(result).toBe('')
   })
 
   it('parameters are available as variables in the prompt', async () => {
@@ -227,14 +221,8 @@ describe('variable assignment', async () => {
       {{ endif }}
       {{ foo }}
     `
-    const action = () =>
-      render({
-        prompt: removeCommonIndent(prompt),
-        parameters: {},
-        adapter: Adapters.default,
-      })
-    const error = await getExpectedError(action, CompileError)
-    expect(error.code).toBe('variable-not-declared')
+    const result = await getCompiledText(prompt)
+    expect(result).toBe('')
   })
 
   it('variables can be modified from an inner scope', async () => {

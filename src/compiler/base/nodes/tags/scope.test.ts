@@ -1,13 +1,7 @@
 import { Adapters, Chain, render } from '$promptl/index'
 import { complete } from '$promptl/compiler/test/helpers'
 import { removeCommonIndent } from '$promptl/compiler/utils'
-import CompileError from '$promptl/error/error'
-import { getExpectedError } from '$promptl/test/helpers'
-import {
-  MessageRole,
-  SystemMessage,
-  UserMessage,
-} from '$promptl/types'
+import { MessageRole, SystemMessage, UserMessage } from '$promptl/types'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('scope tags', async () => {
@@ -48,7 +42,7 @@ describe('scope tags', async () => {
     `)
 
     const result = await render({ prompt, adapter: Adapters.default })
-    
+
     expect(result.messages.length).toBe(1)
     const message = result.messages[0]! as SystemMessage
     expect(message.content).toEqual([
@@ -67,18 +61,19 @@ describe('scope tags', async () => {
     const prompt = removeCommonIndent(`
       {{ foo = 'bar' }}
       <scope>
-        {{ foo }}
+        {{ foo == 'bar' }}
       </scope>
     `)
 
-    const action = () => render({
-      prompt,
-      parameters: { foo: 'baz' },
-      adapter: Adapters.default
-    })
-
-    const error = await getExpectedError(action, CompileError)
-    expect(error.code).toBe('variable-not-declared')
+    const result = await render({ prompt, adapter: Adapters.default })
+    expect(result.messages.length).toBe(1)
+    const message = result.messages[0]! as SystemMessage
+    expect(message.content).toEqual([
+      {
+        type: 'text',
+        text: 'false',
+      },
+    ])
   })
 
   it('can inherit parameters from parents if explicitly passed', async () => {
@@ -91,7 +86,7 @@ describe('scope tags', async () => {
     const result = await render({
       prompt,
       parameters: { foo: 'bar' },
-      adapter: Adapters.default
+      adapter: Adapters.default,
     })
 
     expect(result.messages.length).toBe(1)
