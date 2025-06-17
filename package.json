@@ -1,6 +1,6 @@
 {
   "name": "promptl-ai",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "author": "Latitude Data",
   "license": "MIT",
   "description": "Compiler for PromptL, the prompt language",
@@ -39,8 +39,8 @@
     "code-red": "^1.0.3",
     "fast-sha256": "^1.3.0",
     "locate-character": "^3.0.0",
-    "yaml": "^2.4.5",
     "openai": "^4.98.0",
+    "yaml": "^2.4.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -48,7 +48,7 @@
     "@eslint/js": "^9.17.0",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-node-resolve": "^15.3.1",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/estree": "^1.0.1",
     "@types/node": "^20.12.12",

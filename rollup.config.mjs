@@ -4,6 +4,7 @@ import * as url from 'url'
 import alias from '@rollup/plugin-alias'
 import typescript from '@rollup/plugin-typescript'
 import { dts } from 'rollup-plugin-dts'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
 
 /**
  * We have a internal circular dependency in the compiler,
@@ -39,6 +40,7 @@ export default [
       { file: 'dist/index.cjs', format: 'cjs' },
     ],
     plugins: [
+      nodeResolve(),
       typescript({
         noEmit: true,
         tsconfig: './tsconfig.json',
@@ -48,8 +50,6 @@ export default [
     external: [
       'openai',
       'acorn',
-      'locate-character',
-      'code-red',
       'node:crypto',
       'yaml',
       'crypto',
