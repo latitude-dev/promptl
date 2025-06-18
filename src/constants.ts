@@ -21,7 +21,7 @@ export enum TAG_NAMES {
 
 export const CUSTOM_MESSAGE_ROLE_ATTR = 'role' as const
 export const CUSTOM_CONTENT_TYPE_ATTR = 'type' as const
-export const REFERENCE_PROMPT_ATTR = 'path' as const
+export const REFERENCE_PATH_ATTR = 'path' as const
 export const REFERENCE_DEPTH_LIMIT = 50
 export const CHAIN_STEP_ISOLATED_ATTR = 'isolated' as const
 

@@ -186,9 +186,9 @@ export default {
     code: 'message-tag-without-role',
     message: 'Message tags must have a role attribute',
   },
-  referenceTagWithoutPrompt: {
+  referenceTagWithoutPath: {
     code: 'reference-tag-without-prompt',
-    message: 'Reference tags must have a prompt attribute',
+    message: 'Reference tags must have a `path` attribute',
   },
   missingReferenceFunction: {
     code: 'missing-reference-function',

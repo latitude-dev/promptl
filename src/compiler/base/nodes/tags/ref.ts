@@ -32,7 +32,7 @@ export async function compile(
   }
 
   const { path, ...refParameters } = attributes
-  if (!path) baseNodeError(errors.referenceTagWithoutPrompt, node)
+  if (!path) baseNodeError(errors.referenceTagWithoutPath, node)
   if (typeof path !== 'string') baseNodeError(errors.invalidReferencePath, node)
 
   if (!nodeWithStatus.status.refAst || !nodeWithStatus.status.refFullPath) {

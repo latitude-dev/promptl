@@ -3,7 +3,7 @@ import sha256 from 'fast-sha256'
 import {
   CUSTOM_MESSAGE_ROLE_ATTR,
   REFERENCE_DEPTH_LIMIT,
-  REFERENCE_PROMPT_ATTR,
+  REFERENCE_PATH_ATTR,
   TAG_NAMES,
 } from '$promptl/constants'
 import CompileError, { error } from '$promptl/error/error'
@@ -543,11 +543,11 @@ export class Scan {
         const attributes = await this.listTagAttributes({
           tagNode: node,
           scopeContext,
-          literalAttributes: [REFERENCE_PROMPT_ATTR],
+          literalAttributes: [REFERENCE_PATH_ATTR],
         })
 
-        if (!attributes.has(REFERENCE_PROMPT_ATTR)) {
-          this.baseNodeError(errors.referenceTagWithoutPrompt, node)
+        if (!attributes.has(REFERENCE_PATH_ATTR)) {
+          this.baseNodeError(errors.referenceTagWithoutPath, node)
           return
         }
 
@@ -562,14 +562,14 @@ export class Scan {
         }
 
         const refPromptAttribute = node.attributes.find(
-          (attribute: Attribute) => attribute.name === REFERENCE_PROMPT_ATTR,
+          (attribute: Attribute) => attribute.name === REFERENCE_PATH_ATTR,
         ) as Attribute
 
         const refPromptPath = (refPromptAttribute.value as TemplateNode[])
           .map((node) => node.data)
           .join('')
 
-        attributes.delete(REFERENCE_PROMPT_ATTR) // The rest of the attributes are used as parameters
+        attributes.delete(REFERENCE_PATH_ATTR) // The rest of the attributes are used as parameters
 
         const currentReferences = this.references[this.fullPath] ?? []
 
@@ -653,7 +653,7 @@ export class Scan {
         const posttext = this.resolvedPrompt.slice(end)
 
         const attributeTags = node.attributes
-          .filter((a) => a.name !== REFERENCE_PROMPT_ATTR)
+          .filter((a) => a.name !== REFERENCE_PATH_ATTR)
           .map((attr) => {
             const attrStart = attr.start! + this.resolvedPromptOffset
             const attrEnd = attr.end! + this.resolvedPromptOffset
