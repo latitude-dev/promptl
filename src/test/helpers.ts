@@ -1,8 +1,8 @@
 import { expect } from 'vitest'
 
-export async function getExpectedError<T>(
+export async function getExpectedError<T extends Error>(
   action: () => unknown,
-  errorClass: new () => T,
+  errorClass: new (...args: any[]) => T,
 ): Promise<T> {
   try {
     await action()

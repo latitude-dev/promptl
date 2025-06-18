@@ -16,12 +16,50 @@ type CompileErrorProps = {
 }
 
 export default class CompileError extends Error {
-  code?: string
+  startIndex: number
+  endIndex: number
+  name: string
+  code: string
+  frame: string
   start?: Position
   end?: Position
   pos?: number
-  frame?: string
   fragment?: Fragment
+
+  constructor({
+    message,
+    name,
+    code,
+    startIndex,
+    endIndex,
+    start,
+    end,
+    frame,
+    fragment,
+  }: {
+    message: string
+    name: string
+    code: string
+    startIndex: number
+    endIndex: number
+    frame: string
+    start?: Position
+    end?: Position
+    fragment?: Fragment
+  }) {
+    super(message)
+
+    this.name = name
+    this.code = code
+    this.startIndex = startIndex
+    // Legacy alias for startIndex
+    this.pos = this.startIndex
+    this.endIndex = endIndex
+    this.start = start
+    this.end = end
+    this.frame = frame
+    this.fragment = fragment
+  }
 
   toString() {
     if (!this.start) return this.message
@@ -63,8 +101,6 @@ function getCodeFrame(
 }
 
 export function error(message: string, props: CompileErrorProps): never {
-  const error = new CompileError(message)
-  error.name = props.name
   const start = locate(props.source, props.start, {
     offsetLine: 1,
     offsetColumn: 1,
@@ -73,16 +109,21 @@ export function error(message: string, props: CompileErrorProps): never {
     offsetLine: 1,
     offsetColumn: 1,
   })
-  error.code = props.code
-  error.start = start
-  error.end = end
-  error.pos = props.start
-  error.frame = getCodeFrame(
-    props.source,
-    (start?.line ?? 1) - 1,
-    start?.column ?? 0,
-    end?.column,
-  )
-  error.fragment = props.fragment
-  throw error
+  const endIndex = props.end ?? props.start
+  throw new CompileError({
+    message,
+    name: props.name,
+    code: props.code,
+    startIndex: props.start,
+    endIndex,
+    start,
+    end,
+    frame: getCodeFrame(
+      props.source,
+      (start?.line ?? 1) - 1,
+      start?.column ?? 0,
+      end?.column,
+    ),
+    fragment: props.fragment,
+  })
 }
