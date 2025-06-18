@@ -762,9 +762,16 @@ describe('syntax errors', async () => {
 
     const metadata = await scan({ prompt })
 
-    expect(metadata.errors).toEqual([
-      new CompileError('Tool messages must have an id attribute'),
-    ])
+    expect(metadata.errors.length).toBe(1)
+    const error = metadata.errors[0]!
+    expect(error.name).toBe('CompileError')
+    expect(error.code).toBe('tool-message-without-id')
+    expect(error.message).toBe('Tool messages must have an id attribute')
+    expect(error.startIndex).toBe(0)
+    expect(error.endIndex).toBe(19)
+    expect(error.frame).toEqual(
+      '1: <tool>Tool 1</tool>\n\n    ^~~~~~~~~~~~~~~~~~~',
+    )
   })
 
   it('throw error if tool does not have name', async () => {
@@ -775,9 +782,15 @@ describe('syntax errors', async () => {
     const metadata = await scan({ prompt })
 
     expect(metadata.errors).toEqual([
-      new CompileError(
-        'Tool messages must have a name attribute equal to the tool name used in tool-call',
-      ),
+      new CompileError({
+        message:
+          'Tool messages must have a name attribute equal to the tool name used in tool-call',
+        startIndex: 0,
+        endIndex: 21,
+        name: 'Tool 1',
+        code: 'tool-missing-name',
+        frame: expect.any(String),
+      }),
     ])
   })
 })
