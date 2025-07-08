@@ -47,6 +47,26 @@ describe('hash', async () => {
     expect(metadata1.hash).not.toBe(metadata3.hash)
   })
 
+  it('always returns ast (serialized fragments)', async () => {
+    const prompt = 'This is a prompt'
+
+    const metadata = await scan({ prompt })
+    expect(metadata.ast).toEqual({
+      start: 0,
+      end: 16,
+      type: 'Fragment',
+      children: [
+        {
+          start: 0,
+          end: 16,
+          type: 'Text',
+          raw: 'This is a prompt',
+          data: 'This is a prompt',
+        },
+      ],
+    })
+  })
+
   it('includes the content from referenced tags into account when calculating the hash', async () => {
     const parent = 'This is the parent prompt. <prompt path="child" /> The end.'
     const child1 = 'ABCDEFG'
