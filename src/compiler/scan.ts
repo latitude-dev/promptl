@@ -174,6 +174,7 @@ export class Scan {
         ...(scopeContext.onlyPredefinedVariables ?? new Set([])),
       ]),
       hash,
+      ast: fragment,
       resolvedPrompt,
       config: this.config ?? {},
       errors: this.errors,
