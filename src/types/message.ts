@@ -5,6 +5,7 @@ export enum ContentType {
   image = 'image',
   file = 'file',
   toolCall = 'tool-call',
+  toolResult = 'tool-result',
 }
 
 export enum ContentTypeTagName {
@@ -50,11 +51,20 @@ export type ToolCallContent = {
   toolArguments: Record<string, unknown>
 }
 
+export type ToolResultContent = {
+  type: ContentType.toolResult
+  toolCallId: string
+  toolName: string
+  result: unknown
+  isError?: boolean
+}
+
 export type MessageContent =
   | TextContent
   | ImageContent
   | FileContent
   | ToolCallContent
+  | ToolResultContent
 
 /* Message */
 
