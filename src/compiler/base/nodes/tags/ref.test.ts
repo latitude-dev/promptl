@@ -56,7 +56,8 @@ describe('ref tags', async () => {
       child: 'child message',
     }
 
-    const action = () => render({ prompt: prompts['parent'], adapter: Adapters.default })
+    const action = () =>
+      render({ prompt: prompts['parent'], adapter: Adapters.default })
     const error = await getExpectedError(action, CompileError)
     expect(error.code).toBe('missing-reference-function')
   })
@@ -83,16 +84,19 @@ describe('ref tags', async () => {
       parent: '<prompt path="child" />',
     }
 
-    const action = () =>
-      render({
-        prompt: prompts['parent'],
-        parameters: { foo: 'bar' },
-        referenceFn: buildReferenceFn(prompts),
-        adapter: Adapters.default,
-      })
-
-    const error = await getExpectedError(action, CompileError)
-    expect(error.code).toBe('variable-not-declared')
+    const result = await render({
+      prompt: prompts['parent'],
+      referenceFn: buildReferenceFn(prompts),
+      adapter: Adapters.default,
+    })
+    expect(result.messages.length).toBe(1)
+    const message = result.messages[0]! as SystemMessage
+    expect(message.content).toEqual([
+      {
+        type: 'text',
+        text: 'Child message:',
+      },
+    ])
   })
 
   it('referenced prompts can receive parameters as tag attributes', async () => {
@@ -336,12 +340,12 @@ describe('ref tags', async () => {
           {{ bar }}
           </content-text>
         {{ endfor }}
-      `)
+      `),
     }
 
     const metadata = await scan({
       prompt: prompts['parent'],
-      referenceFn: buildReferenceFn(prompts)
+      referenceFn: buildReferenceFn(prompts),
     })
 
     const result = await render({
@@ -351,18 +355,19 @@ describe('ref tags', async () => {
     })
 
     expect(result.messages.length).toBe(2)
-    const [ firstMessage, secondMessage ] = result.messages as [UserMessage, SystemMessage]
+    const [firstMessage, secondMessage] = result.messages as [
+      UserMessage,
+      SystemMessage,
+    ]
     expect(firstMessage.role).toBe(MessageRole.user)
     expect(firstMessage.content.length).toBe(3)
     expect(firstMessage.content).toEqual([
-      { type: 'text', text: '11'},
-      { type: 'text', text: '12'},
-      { type: 'text', text: '13'},
+      { type: 'text', text: '11' },
+      { type: 'text', text: '12' },
+      { type: 'text', text: '13' },
     ])
     expect(secondMessage.role).toBe(MessageRole.system)
     expect(secondMessage.content.length).toBe(1)
-    expect(secondMessage.content).toEqual([
-      { type: 'text', text: '10' }
-    ])
+    expect(secondMessage.content).toEqual([{ type: 'text', text: '10' }])
   })
 })

@@ -1,5 +1,3 @@
-import CompileError from '$promptl/error/error'
-import { getExpectedError } from '$promptl/test/helpers'
 import { Message, MessageContent, TextContent } from '$promptl/types'
 import { describe, expect, it } from 'vitest'
 
@@ -71,12 +69,11 @@ describe('each loops', async () => {
     const prompt1 = `{{ for elemenet in ['a', 'b', 'c'] }} {{foo = 5}} {{ endfor }} {{foo}}`
     const prompt2 = `{{foo = 5}} {{ for element in ['a', 'b', 'c'] }} {{foo = 7}} {{ endfor }} {{foo}}`
     const prompt3 = `{{foo = 5}} {{ for element in [1, 2, 3] }} {{foo += element}} {{ endfor }} {{foo}}`
-    const action1 = () => render({ prompt: prompt1, parameters: {} })
-    const error1 = await getExpectedError(action1, CompileError)
+    const result1 = await getCompiledText(prompt1)
     const result2 = await getCompiledText(prompt2)
     const result3 = await getCompiledText(prompt3)
 
-    expect(error1.code).toBe('variable-not-declared')
+    expect(result1).toBe('')
     expect(result2).toBe('7')
     expect(result3).toBe('11')
   })

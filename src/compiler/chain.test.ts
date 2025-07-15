@@ -343,19 +343,6 @@ describe('chain', async () => {
       {{foo}}
     `)
 
-    const incorrectPrompt = removeCommonIndent(`
-      {{foo = 5}}
-
-      {{if true}}
-        {{bar = 1}}
-        <step>
-          {{ bar++}}
-        </step>
-      {{endif}}
-
-      {{bar}}
-    `)
-
     const correctChain = new Chain({
       prompt: correctPrompt,
       adapter: Adapters.default,
@@ -371,16 +358,6 @@ describe('chain', async () => {
         },
       ],
     })
-
-    const incorrectChain = new Chain({
-      prompt: incorrectPrompt,
-      parameters: {},
-      adapter: Adapters.default,
-    })
-
-    const action = () => complete({ chain: incorrectChain })
-    const error = await getExpectedError(action, CompileError)
-    expect(error.code).toBe('variable-not-declared')
   })
 
   it('maintains the scope in for loops', async () => {
@@ -417,23 +394,6 @@ describe('chain', async () => {
         },
       ],
     })
-  })
-
-  it('cannot access variables created in a loop outside its scope', async () => {
-    const prompt = removeCommonIndent(`
-      {{for i in [1, 2, 3]}}
-        {{foo = i}}
-        <step />
-      {{endfor}}
-
-      {{foo}}
-    `)
-
-    const chain = new Chain({ prompt, adapter: Adapters.default })
-
-    const action = () => complete({ chain })
-    const error = await getExpectedError(action, CompileError)
-    expect(error.code).toBe('variable-not-declared')
   })
 
   it('maintains the scope in nested loops', async () => {

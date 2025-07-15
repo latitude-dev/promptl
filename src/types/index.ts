@@ -1,4 +1,5 @@
 import CompileError from '$promptl/error/error'
+import { Fragment } from '$promptl/index'
 
 import { Message } from './message'
 
@@ -12,6 +13,7 @@ export type Conversation = {
 export type ConversationMetadata = {
   hash: string
   resolvedPrompt: string
+  ast: Fragment
   config: Config
   errors: CompileError[]
   parameters: Set<string> // Variables used in the prompt that have not been defined in runtime

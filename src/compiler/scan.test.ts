@@ -47,6 +47,26 @@ describe('hash', async () => {
     expect(metadata1.hash).not.toBe(metadata3.hash)
   })
 
+  it('always returns ast (serialized fragments)', async () => {
+    const prompt = 'This is a prompt'
+
+    const metadata = await scan({ prompt })
+    expect(metadata.ast).toEqual({
+      start: 0,
+      end: 16,
+      type: 'Fragment',
+      children: [
+        {
+          start: 0,
+          end: 16,
+          type: 'Text',
+          raw: 'This is a prompt',
+          data: 'This is a prompt',
+        },
+      ],
+    })
+  })
+
   it('includes the content from referenced tags into account when calculating the hash', async () => {
     const parent = 'This is the parent prompt. <prompt path="child" /> The end.'
     const child1 = 'ABCDEFG'
@@ -762,9 +782,16 @@ describe('syntax errors', async () => {
 
     const metadata = await scan({ prompt })
 
-    expect(metadata.errors).toEqual([
-      new CompileError('Tool messages must have an id attribute'),
-    ])
+    expect(metadata.errors.length).toBe(1)
+    const error = metadata.errors[0]!
+    expect(error.name).toBe('CompileError')
+    expect(error.code).toBe('tool-message-without-id')
+    expect(error.message).toBe('Tool messages must have an id attribute')
+    expect(error.startIndex).toBe(0)
+    expect(error.endIndex).toBe(19)
+    expect(error.frame).toEqual(
+      '1: <tool>Tool 1</tool>\n\n    ^~~~~~~~~~~~~~~~~~~',
+    )
   })
 
   it('throw error if tool does not have name', async () => {
@@ -775,9 +802,15 @@ describe('syntax errors', async () => {
     const metadata = await scan({ prompt })
 
     expect(metadata.errors).toEqual([
-      new CompileError(
-        'Tool messages must have a name attribute equal to the tool name used in tool-call',
-      ),
+      new CompileError({
+        message:
+          'Tool messages must have a name attribute equal to the tool name used in tool-call',
+        startIndex: 0,
+        endIndex: 21,
+        name: 'Tool 1',
+        code: 'tool-missing-name',
+        frame: expect.any(String),
+      }),
     ])
   })
 })
