@@ -26,6 +26,7 @@
   "scripts": {
     "dev": "rollup -c -w",
     "build": "rollup -c",
+    "build:lib": "rollup -c rollup.config.mjs",
     "build:rpc": "rollup -c rollup.config.rpc.mjs",
     "test": "vitest run",
     "test:watch": "vitest",

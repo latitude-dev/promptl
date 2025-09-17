@@ -68,4 +68,4 @@ This is just a small example of what PromptL can do. It is a powerful tool that 
 
 To build the JavaScript library, run `pnpm build:lib`.
 
-To build the universal WASM module with RPC, first install [`javy`](https://github.com/bytecodealliance/javy/releases) and then run `pnpm build:rpc`.
+To build the universal WASM module with RPC, first install [`javy`](https://github.com/bytecodealliance/javy/releases) `6.0.0` or higher, and then run `pnpm build:rpc`.

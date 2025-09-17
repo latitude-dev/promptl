@@ -42,9 +42,15 @@ export default {
     }),
     execute([
       [
+        'javy --version |',
+        'grep -q "6.0.0" ||',
+        '(echo "\x1b[0;31mJavy 6.0.0 required\x1b[0m"',
+        '&& exit 1)',
+      ].join(' '),
+      [
         'javy build',
         '-C dynamic=n',
-        '-C source-compression=y',
+        '-C source=compressed',
         '-J javy-stream-io=y',
         '-J simd-json-builtins=y',
         '-J text-encoding=y',
