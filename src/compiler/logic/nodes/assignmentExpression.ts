@@ -136,6 +136,7 @@ async function assignToProperty({
 export function updateScopeContext({
   node,
   scopeContext,
+  builtins,
   raiseError,
 }: UpdateScopeContextProps<AssignmentExpression>) {
   const assignmentOperator = node.operator
@@ -143,11 +144,19 @@ export function updateScopeContext({
     raiseError(errors.unsupportedOperator(assignmentOperator), node)
   }
 
-  updateScopeContextForNode({ node: node.right, scopeContext, raiseError })
+  updateScopeContextForNode({
+    node: node.right,
+    scopeContext,
+    builtins,
+    raiseError,
+  })
 
   if (node.left.type === 'Identifier') {
     // Variable assignment
     const assignedVariableName = (node.left as Identifier).name
+    if (assignedVariableName in builtins) {
+      raiseError(errors.assignmentToBuiltin(assignedVariableName), node)
+    }
     if (assignmentOperator != '=') {
       // Update an existing variable
       if (!scopeContext.definedVariables.has(assignedVariableName)) {
@@ -159,7 +168,12 @@ export function updateScopeContext({
   }
 
   if (node.left.type === 'MemberExpression') {
-    updateScopeContextForNode({ node: node.left, scopeContext, raiseError })
+    updateScopeContextForNode({
+      node: node.left,
+      scopeContext,
+      builtins,
+      raiseError,
+    })
     return
   }
 

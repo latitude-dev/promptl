@@ -26,11 +26,13 @@ type RaiseErrorFn<T = void | never> = (
 export type ResolveNodeProps<N extends Node> = {
   node: N
   scope: Scope
+  builtins: Record<string, () => any>
   raiseError: RaiseErrorFn<never>
 }
 
 export type UpdateScopeContextProps<N extends Node> = {
   node: N
   scopeContext: ScopeContext
+  builtins: Record<string, () => any>
   raiseError: RaiseErrorFn<void>
 }

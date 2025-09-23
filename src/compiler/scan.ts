@@ -4,6 +4,7 @@ import {
   CUSTOM_MESSAGE_ROLE_ATTR,
   REFERENCE_DEPTH_LIMIT,
   REFERENCE_PATH_ATTR,
+  SPECIAL_RESOLVERS,
   TAG_NAMES,
 } from '$promptl/constants'
 import CompileError, { error } from '$promptl/error/error'
@@ -57,6 +58,7 @@ export class Scan {
   private withParameters?: string[]
   private requireConfig: boolean
   private configSchema?: z.ZodType
+  private builtins: Record<string, () => any>
 
   private config?: Config
   private configPosition?: { start: number; end: number }
@@ -95,6 +97,7 @@ export class Scan {
     this.withParameters = withParameters
     this.configSchema = configSchema
     this.requireConfig = requireConfig ?? false
+    this.builtins = SPECIAL_RESOLVERS
 
     this.resolvedPrompt = document.content
     this.includedPromptPaths = new Set([this.fullPath])
@@ -194,6 +197,7 @@ export class Scan {
     await updateScopeContextForNode({
       node,
       scopeContext,
+      builtins: this.builtins,
       raiseError: this.expressionError.bind(this),
     })
   }

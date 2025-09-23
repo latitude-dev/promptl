@@ -181,6 +181,35 @@ describe('variable assignment', async () => {
     expect(result).toBe('')
   })
 
+  it('special $now parameter returns current date in ISO format', async () => {
+    const prompt = `
+      {{ $now }}
+    `
+    const result = await getCompiledText(prompt)
+    // Check that it's a valid ISO date string (JSON stringified)
+    expect(result).toMatch(/^"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"$/)
+  })
+
+  it('special $now can be used in expressions', async () => {
+    const prompt = `
+      {{ time = $now }}
+      {{ time }}
+    `
+    const result = await getCompiledText(prompt)
+    // Check that it's a valid ISO date string (JSON stringified)
+    expect(result).toMatch(/^"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"$/)
+  })
+
+  it('special $now can be used in method calls', async () => {
+    const prompt = `
+      {{ $now.getTime() }}
+    `
+    const result = await getCompiledText(prompt)
+    const timestamp = parseInt(result.trim())
+    expect(timestamp).toBeGreaterThan(0)
+    expect(timestamp).toBeLessThan(Date.now() + 1000) // within 1 second
+  })
+
   it('parameters are available as variables in the prompt', async () => {
     const prompt = `
       {{ foo }}

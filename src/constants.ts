@@ -40,3 +40,8 @@ export enum KEYWORDS {
 
 export const RESERVED_KEYWORDS = Object.values(KEYWORDS)
 export const RESERVED_TAGS = Object.values(TAG_NAMES)
+export const SPECIAL_IDENTIFIERS = new Set(['$now'])
+
+export const SPECIAL_RESOLVERS: Record<string, () => unknown> = {
+  $now: () => new Date(),
+}
