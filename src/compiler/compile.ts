@@ -34,6 +34,7 @@ import type {
   ResolveBaseNodeProps,
 } from './types'
 import { getCommonIndent, removeCommonIndent } from './utils'
+import { SPECIAL_RESOLVERS } from '../constants'
 
 export type CompilationStatus = {
   completed: boolean
@@ -60,6 +61,7 @@ export class Compile {
   private globalScope: Scope
   private defaultRole: MessageRole
   private includeSourceMap: boolean
+  private builtins: Record<string, () => any>
 
   private messages: Message[] = []
   private globalConfig: Config | undefined
@@ -97,6 +99,7 @@ export class Compile {
     this.ast = ast
     this.stepResponse = stepResponse
     this.defaultRole = defaultRole
+    this.builtins = SPECIAL_RESOLVERS
     this.referenceFn = referenceFn
     this.fullPath = fullPath
     this.includeSourceMap = includeSourceMap
@@ -294,6 +297,7 @@ export class Compile {
     return await resolveLogicNode({
       node: expression,
       scope,
+      builtins: this.builtins,
       raiseError: this.expressionError.bind(this),
     })
   }

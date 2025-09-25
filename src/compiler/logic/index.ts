@@ -27,7 +27,7 @@ export async function updateScopeContextForNode(
   props: UpdateScopeContextProps<Node>,
 ) {
   const type = props.node.type as NodeType
-  if (!nodeResolvers[type]) {
+  if (!updateScopeContextResolvers[type]) {
     throw new Error(`Unknown node type: ${type}`)
   }
 

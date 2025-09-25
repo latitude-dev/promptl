@@ -1,6 +1,6 @@
 {
   "name": "promptl-ai",
-  "version": "0.7.5",
+  "version": "0.7.6",
   "author": "Latitude Data",
   "license": "MIT",
   "description": "Compiler for PromptL, the prompt language",
@@ -24,6 +24,7 @@
     "dist"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "dev": "rollup -c -w",
     "build": "rollup -c",
     "build:lib": "rollup -c rollup.config.mjs",

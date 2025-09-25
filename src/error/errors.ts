@@ -137,6 +137,10 @@ export default {
     code: 'invalid-assignment',
     message: 'Invalid assignment',
   },
+  assignmentToBuiltin: (name: string) => ({
+    code: 'assignment-to-builtin',
+    message: `Cannot assign to builtin variable: '${name}'`,
+  }),
   unknownTag: (name: string) => ({
     code: 'unknown-tag',
     message: `Unknown tag: '${name}'`,

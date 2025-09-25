@@ -588,6 +588,33 @@ describe('parameters', async () => {
 
     expect(metadata.parameters).toEqual(new Set(['foo', 'bar', 'arr']))
   })
+
+  it('does not include special identifiers as parameters', async () => {
+    const prompt = `
+      {{ $now }}
+    `
+
+    const metadata = await scan({
+      prompt: removeCommonIndent(prompt),
+    })
+
+    expect(metadata.parameters).toEqual(new Set())
+  })
+
+  it('raises error when assigning to builtin', async () => {
+    const prompt = `
+      {{ $now = "2023-01-01" }}
+    `
+
+    const metadata = await scan({
+      prompt: removeCommonIndent(prompt),
+    })
+
+    expect(metadata.errors).toHaveLength(1)
+    expect(metadata.errors[0]!.message).toBe(
+      "Cannot assign to builtin variable: '$now'",
+    )
+  })
 })
 
 describe('referenced prompts', async () => {
