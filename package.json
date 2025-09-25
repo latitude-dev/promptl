@@ -43,7 +43,7 @@
     "locate-character": "^3.0.0",
     "openai": "^4.98.0",
     "yaml": "^2.4.5",
-    "zod": "^3.23.8"
+    "zod": "^4.1.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
