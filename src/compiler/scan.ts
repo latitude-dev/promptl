@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import sha256 from 'fast-sha256'
 
 import {
@@ -26,7 +27,6 @@ import {
 } from '$promptl/types'
 import { Node as LogicalExpression } from 'estree'
 import yaml, { Node as YAMLItem } from 'yaml'
-import { z } from 'zod'
 
 import { updateScopeContextForNode } from './logic'
 import { ScopeContext } from './scope'
@@ -49,6 +49,8 @@ function copyScopeContext(scopeContext: ScopeContext): ScopeContext {
   }
 }
 
+export type ScanSchema = unknown
+
 export class Scan {
   includedPromptPaths: Set<string>
 
@@ -57,7 +59,7 @@ export class Scan {
   private fullPath: string
   private withParameters?: string[]
   private requireConfig: boolean
-  private configSchema?: z.ZodTypeAny
+  private configSchema?: ScanSchema
   private builtins: Record<string, () => any>
 
   private config?: Config
@@ -86,7 +88,7 @@ export class Scan {
     document: Document
     referenceFn?: ReferencePromptFn
     withParameters?: string[]
-    configSchema?: z.ZodType
+    configSchema?: ScanSchema
     requireConfig?: boolean
     serialized?: Fragment
   }) {
@@ -315,8 +317,9 @@ export class Scan {
       let parsedObj = {}
 
       try {
+        const configSchema = this.configSchema as z.ZodType
         parsedObj = parsedYaml.toJS() ?? {}
-        this.configSchema?.parse(parsedObj)
+        configSchema?.parse(parsedObj)
       } catch (err) {
         if (isZodError(err)) {
           err.errors.forEach((error) => {

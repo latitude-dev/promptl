@@ -5,10 +5,9 @@ import {
 } from '$promptl/providers'
 import { ProviderConversation } from '$promptl/providers/adapter'
 import { ConversationMetadata, Message } from '$promptl/types'
-import { z } from 'zod'
 
 import { Chain } from './chain'
-import { Scan } from './scan'
+import { Scan, ScanSchema } from './scan'
 import type { CompileOptions, Document, ReferencePromptFn } from './types'
 import { Fragment } from '$promptl/parser/interfaces'
 
@@ -52,7 +51,7 @@ export function scan({
   fullPath?: string
   referenceFn?: ReferencePromptFn
   withParameters?: string[]
-  configSchema?: z.ZodTypeAny
+  configSchema?: ScanSchema
   requireConfig?: boolean
 }): Promise<ConversationMetadata> {
   return new Scan({
