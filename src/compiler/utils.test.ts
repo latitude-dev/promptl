@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { ZodError, core, z } from 'zod'
+import { ZodError, ZodIssue, ZodIssueCode, z } from 'zod'
 import { getMostSpecificError } from './utils'
 
-type ZodIssue = core.$ZodIssue
-
 function makeZodError(issues: ZodIssue[]): ZodError {
+  // @ts-ignore
   return new ZodError(issues)
 }
 
@@ -12,9 +11,9 @@ describe('getMostSpecificError', () => {
   it('returns the message and path for a simple error', () => {
     const error = makeZodError([
       {
-        code: 'invalid_type',
+        code: ZodIssueCode.invalid_type,
         expected: 'string',
-        input: 'number',
+        received: 'number',
         path: ['foo'],
         message: 'Expected string',
       },
@@ -27,26 +26,26 @@ describe('getMostSpecificError', () => {
   it('returns the most specific (deepest) error in a nested structure', () => {
     const unionError = makeZodError([
       {
-        code: 'invalid_union',
-        errors: [
-          [
+        code: ZodIssueCode.invalid_union,
+        unionErrors: [
+          makeZodError([
             {
-              code: 'invalid_type',
+              code: ZodIssueCode.invalid_type,
               expected: 'string',
-              input: 'number',
+              received: 'number',
               path: ['foo', 'bar'],
               message: 'Expected string',
             },
-          ],
-          [
+          ]),
+          makeZodError([
             {
-              code: 'invalid_type',
+              code: ZodIssueCode.invalid_type,
               expected: 'number',
-              input: 'string',
+              received: 'string',
               path: ['foo'],
               message: 'Expected number',
             },
-          ],
+          ]),
         ],
         path: ['foo'],
         message: 'Invalid union',
@@ -60,7 +59,7 @@ describe('getMostSpecificError', () => {
   it('returns the error message and empty path if no issues', () => {
     const error = makeZodError([
       {
-        code: 'custom',
+        code: ZodIssueCode.custom,
         path: [],
         message: 'Custom error',
       },
@@ -73,16 +72,16 @@ describe('getMostSpecificError', () => {
   it('handles errors with multiple paths and picks the deepest', () => {
     const error = makeZodError([
       {
-        code: 'invalid_type',
+        code: ZodIssueCode.invalid_type,
         expected: 'string',
-        input: 'number',
+        received: 'number',
         path: ['a'],
         message: 'Expected string',
       },
       {
-        code: 'invalid_type',
+        code: ZodIssueCode.invalid_type,
         expected: 'number',
-        input: 'string',
+        received: 'string',
         path: ['a', 'b', 'c'],
         message: 'Expected number',
       },

@@ -57,7 +57,7 @@ export class Scan {
   private fullPath: string
   private withParameters?: string[]
   private requireConfig: boolean
-  private configSchema?: z.ZodType
+  private configSchema?: z.ZodTypeAny
   private builtins: Record<string, () => any>
 
   private config?: Config
@@ -319,8 +319,8 @@ export class Scan {
         this.configSchema?.parse(parsedObj)
       } catch (err) {
         if (isZodError(err)) {
-          err.issues.forEach((issue) => {
-            const { message, path } = getMostSpecificError(issue)
+          err.errors.forEach((error) => {
+            const { message, path } = getMostSpecificError(error)
 
             const range = findYAMLItemPosition(
               parsedYaml.contents as YAMLItem,
