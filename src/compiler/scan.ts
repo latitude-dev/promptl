@@ -57,7 +57,7 @@ export class Scan {
   private fullPath: string
   private withParameters?: string[]
   private requireConfig: boolean
-  private configSchema?: z.ZodType
+  private configSchema?: z.ZodTypeAny
   private builtins: Record<string, () => any>
 
   private config?: Config
