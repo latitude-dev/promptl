@@ -52,7 +52,7 @@ export function scan({
   fullPath?: string
   referenceFn?: ReferencePromptFn
   withParameters?: string[]
-  configSchema?: z.ZodType
+  configSchema?: z.ZodTypeAny
   requireConfig?: boolean
 }): Promise<ConversationMetadata> {
   return new Scan({
