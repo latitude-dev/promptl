@@ -1,3 +1,4 @@
+import { ZodError, core } from 'zod'
 import { TAG_NAMES } from '$promptl/constants'
 import {
   ChainStepTag,
@@ -9,7 +10,8 @@ import {
 } from '$promptl/parser/interfaces'
 import { ContentTypeTagName, MessageRole } from '$promptl/types'
 import { Scalar, Node as YAMLItem, YAMLMap, YAMLSeq } from 'yaml'
-import { ZodError, ZodIssue, ZodIssueCode } from 'zod'
+
+type ZodIssue = core.$ZodIssue
 
 export function isIterable(obj: unknown): obj is Iterable<unknown> {
   return (obj as Iterable<unknown>)?.[Symbol.iterator] !== undefined
@@ -76,7 +78,7 @@ export function tagAttributeIsLiteral(tag: ElementTag, name: string): boolean {
 type YAMLItemRange = [number, number] | undefined
 export function findYAMLItemPosition(
   parent: YAMLItem,
-  path: (string | number)[],
+  path: PropertyKey[],
 ): YAMLItemRange {
   const parentRange: YAMLItemRange = parent?.range
     ? [parent.range[0], parent.range[1]]
@@ -101,145 +103,78 @@ export function findYAMLItemPosition(
 }
 
 export function isZodError(error: unknown): error is ZodError {
-  if (!(error instanceof Error)) return false
-
-  if (error instanceof ZodError) return true
-  if (error.constructor.name === 'ZodError') return true
-  if ('issues' in error && error.issues instanceof Array) return true
-
-  return false
+  return error instanceof ZodError
 }
 
 function collectAllLeafIssues(issue: ZodIssue): ZodIssue[] {
-  switch (issue.code) {
-    case ZodIssueCode.invalid_union: {
-      // invalid_union.issue.unionErrors is ZodError[]
-      const unionErrs: ZodError[] = (issue as any).unionErrors ?? []
-      return unionErrs.flatMap((nestedZodError) =>
-        nestedZodError.issues.flatMap((nestedIssue) =>
-          collectAllLeafIssues(nestedIssue),
-        ),
-      )
-    }
-
-    case ZodIssueCode.invalid_arguments: {
-      // invalid_arguments.issue.argumentsError is ZodError
-      const argsErr: ZodError | undefined = (issue as any).argumentsError
-      if (argsErr) {
-        return argsErr.issues.flatMap((nestedIssue) =>
-          collectAllLeafIssues(nestedIssue),
-        )
-      }
-      return [issue]
-    }
-
-    case ZodIssueCode.invalid_return_type: {
-      // invalid_return_type.issue.returnTypeError is ZodError
-      const retErr: ZodError | undefined = (issue as any).returnTypeError
-      if (retErr) {
-        return retErr.issues.flatMap((nestedIssue) =>
-          collectAllLeafIssues(nestedIssue),
-        )
-      }
-      return [issue]
-    }
-
-    default:
-      // Any other issue code is considered a “leaf” (no deeper nested ZodError)
-      return [issue]
+  if (issue.code === 'invalid_union') {
+    issue.errors
+    return issue.errors.flatMap((issues) =>
+      issues.flatMap(collectAllLeafIssues),
+    )
   }
+  return [issue]
 }
 
 function getZodIssueMessage(issue: ZodIssue): string {
-  if (issue.code === ZodIssueCode.invalid_type) {
-    const attribute = issue.path[issue.path.length - 1]
-    if (typeof attribute === 'string') {
-      return `Expected type \`${issue.expected}\` for attribute "${attribute}", but received \`${issue.received}\`.`
+  switch (issue.code) {
+    case 'invalid_type': {
+      const attr = issue.path.at(-1)
+      return typeof attr === 'string'
+        ? `Expected type \`${issue.expected}\` for attribute "${attr}", but received \`${issue.input}\`.`
+        : `Expected type \`${issue.expected}\`, but received \`${issue.input}\`.`
     }
 
-    return `Expected type \`${issue.expected}\`, but received \`${issue.received}\`.`
-  }
-  if (issue.code === ZodIssueCode.invalid_literal) {
-    const attribute = issue.path[issue.path.length - 1]
-    if (typeof attribute === 'string') {
-      return `Expected literal \`${issue.expected}\` for attribute "${attribute}", but received \`${issue.received}\`.`
+    case 'invalid_value': {
+      const attr = issue.path.at(-1)
+      const literalValues = issue.values.join(', ')
+      return typeof attr === 'string'
+        ? `Expected literal \`${literalValues}\` for attribute "${attr}", but received \`${issue.input}\`.`
+        : `Expected literal \`${literalValues}\`, but received \`${issue.input}\`.`
     }
 
-    return `Expected literal \`${issue.expected}\`, but received \`${issue.received}\`.`
+    case 'unrecognized_keys':
+      return `Unrecognized keys: ${issue.keys.join(', ')}.`
+
+    case 'invalid_union':
+      return `Invalid union: ${issue.message}`
+
+    case 'too_small':
+      return `Value is too small: ${issue.message || 'Value does not meet minimum size.'}`
+
+    case 'too_big':
+      return `Value is too big: ${issue.message || 'Value exceeds maximum size.'}`
+
+    case 'not_multiple_of':
+      return `Value is not a multiple of ${issue.divisor}: ${issue.message || 'Value does not meet multiple of condition.'}`
+
+    case 'custom':
+      return `Custom validation error: ${issue.message || 'No additional message provided.'}`
+
+    case 'invalid_key':
+      return `Invalid key: ${issue.message || 'Key validation failed.'}`
+
+    case 'invalid_format':
+      return `Invalid format: ${issue.message || `Expected format ${issue.format}.`}`
+
+    case 'invalid_element':
+      return `Invalid element: ${issue.message || 'Element validation failed.'}`
+
+    default:
+      // The types are exhaustive, but we don't want to miss any new ones
+      return 'Unknown validation error.'
   }
-  if (issue.code === ZodIssueCode.unrecognized_keys) {
-    return `Unrecognized keys: ${issue.keys.join(', ')}.`
-  }
-  if (issue.code === ZodIssueCode.invalid_union) {
-    return `Invalid union: ${issue.unionErrors
-      .map((err) => err.message)
-      .join(', ')}`
-  }
-  if (issue.code === ZodIssueCode.invalid_union_discriminator) {
-    return `Invalid union discriminator. Expected one of: ${issue.options.join(
-      ', ',
-    )}.`
-  }
-  if (issue.code === ZodIssueCode.invalid_enum_value) {
-    return `Invalid enum value: ${issue.received}. Expected one of: ${issue.options.join(
-      ', ',
-    )}.`
-  }
-  if (issue.code === ZodIssueCode.invalid_arguments) {
-    return `Invalid arguments: ${issue.argumentsError.issues
-      .map((err) => err.message)
-      .join(', ')}`
-  }
-  if (issue.code === ZodIssueCode.invalid_return_type) {
-    return `Invalid return type: ${issue.returnTypeError.issues
-      .map((err) => err.message)
-      .join(', ')}`
-  }
-  if (issue.code === ZodIssueCode.invalid_date) {
-    return `Invalid date: ${issue.message || 'Invalid date format.'}`
-  }
-  if (issue.code === ZodIssueCode.invalid_string) {
-    return `Invalid string: ${issue.message || 'String does not match expected format.'}`
-  }
-  if (issue.code === ZodIssueCode.too_small) {
-    return `Value is too small: ${issue.message || 'Value does not meet minimum size.'}`
-  }
-  if (issue.code === ZodIssueCode.too_big) {
-    return `Value is too big: ${issue.message || 'Value exceeds maximum size.'}`
-  }
-  if (issue.code === ZodIssueCode.invalid_intersection_types) {
-    return `Invalid intersection types: ${issue.message || 'Types do not match.'}`
-  }
-  if (issue.code === ZodIssueCode.not_multiple_of) {
-    return `Value is not a multiple of ${issue.multipleOf}: ${issue.message || 'Value does not meet multiple of condition.'}`
-  }
-  if (issue.code === ZodIssueCode.not_finite) {
-    return `Value is not finite: ${issue.message || 'Value must be a finite number.'}`
-  }
-  if (issue.code === ZodIssueCode.custom) {
-    return `Custom validation error: ${issue.message || 'No additional message provided.'}`
-  }
-  // For any other issue code, return the message directly
-  return (issue as ZodIssue).message || 'Unknown validation error.'
 }
 
 export function getMostSpecificError(error: ZodIssue): {
   message: string
-  path: (string | number)[]
+  path: PropertyKey[]
 } {
   const allIssues = collectAllLeafIssues(error)
-
-  if (allIssues.length === 0) {
-    return { message: error.message, path: [] }
-  }
-
-  let mostSpecific = allIssues[0]!
-  for (const issue of allIssues) {
-    if (issue.path.length > mostSpecific.path.length) {
-      mostSpecific = issue
-    }
-  }
-
+  const mostSpecific = allIssues.reduce(
+    (acc, cur) => (cur.path.length > acc.path.length ? cur : acc),
+    allIssues[0]!,
+  )
   return {
     message: getZodIssueMessage(mostSpecific),
     path: mostSpecific.path,
