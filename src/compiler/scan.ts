@@ -322,8 +322,8 @@ export class Scan {
         configSchema?.parse(parsedObj)
       } catch (err) {
         if (isZodError(err)) {
-          err.errors.forEach((error) => {
-            const { message, path } = getMostSpecificError(error)
+          err.issues.forEach((issue) => {
+            const { message, path } = getMostSpecificError(issue)
 
             const range = findYAMLItemPosition(
               parsedYaml.contents as YAMLItem,
