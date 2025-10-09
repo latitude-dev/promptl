@@ -3,14 +3,16 @@ import { Message } from '$promptl/types'
 import { defaultAdapter, ProviderAdapter } from './adapter'
 import { AnthropicAdapter } from './anthropic/adapter'
 import { OpenAIAdapter } from './openai/adapter'
+import { VercelAIAdapter } from './vercel-ai/adapter'
 
 export type { ProviderAdapter } from './adapter'
 
 export const Adapters = {
   default: defaultAdapter,
+  anthropic: AnthropicAdapter,
   openai: OpenAIAdapter,
   openaiResponses: OpenAIResponsesAdapter,
-  anthropic: AnthropicAdapter,
+  vercel: VercelAIAdapter,
 } as const
 
 export type AdapterKey = keyof typeof Adapters
