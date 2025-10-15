@@ -452,13 +452,13 @@ export class Scan {
           this.baseNodeError(errors.contentTagInsideContent, node)
         }
 
+        const attributes = await this.listTagAttributes({
+          tagNode: node,
+          scopeContext,
+        })
+
         if (node.name === ContentTypeTagName.toolCall) {
           this.accumulatedToolCalls.push(node)
-
-          const attributes = await this.listTagAttributes({
-            tagNode: node,
-            scopeContext,
-          })
 
           if (!attributes.has('id')) {
             this.baseNodeError(errors.toolCallTagWithoutId, node)

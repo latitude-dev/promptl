@@ -615,6 +615,22 @@ describe('parameters', async () => {
       "Cannot assign to builtin variable: '$now'",
     )
   })
+
+  it('includes parameters from content tags', async () => {
+    const prompt = `
+      <user>
+        <content-file mime={{mimeParam}}>
+          {{fileContent}}
+        </content-file>
+      </user>
+    `
+
+    const metadata = await scan({
+      prompt: removeCommonIndent(prompt),
+    })
+
+    expect(metadata.parameters).toEqual(new Set(['mimeParam', 'fileContent']))
+  })
 })
 
 describe('referenced prompts', async () => {
