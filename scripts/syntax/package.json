@@ -1,0 +1,17 @@
+{
+  "name": "promptl-syntax-check",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Syntax checker for PromptL files",
+  "scripts": {
+    "check": "tsx check.ts"
+  },
+  "dependencies": {
+    "promptl-ai": "^0.9.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

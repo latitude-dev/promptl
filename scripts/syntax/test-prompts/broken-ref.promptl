@@ -1,0 +1,11 @@
+---
+model: gpt-4
+---
+
+<system>
+<prompt path="nonexistent" />
+</system>
+
+<user>
+This should fail because nonexistent.promptl doesn't exist.
+</user>

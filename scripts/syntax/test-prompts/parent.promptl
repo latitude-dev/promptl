@@ -1,0 +1,11 @@
+---
+model: gpt-4
+---
+
+<system>
+<prompt path="shared" />
+</system>
+
+<user>
+Hello!
+</user>
