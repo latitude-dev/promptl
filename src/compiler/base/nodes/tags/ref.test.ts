@@ -78,6 +78,22 @@ describe('ref tags', async () => {
     expect(error.code).toBe('reference-not-found')
   })
 
+  it('throws an error if the path attribute has no value', async () => {
+    const prompts = {
+      parent: '<prompt path />',
+    }
+
+    const action = () =>
+      render({
+        prompt: prompts['parent'],
+        referenceFn: buildReferenceFn(prompts),
+        adapter: Adapters.default,
+      })
+
+    const error = await getExpectedError(action, CompileError)
+    expect(error.code).toBe('invalid-reference-path')
+  })
+
   it('referenced prompts do not inherit variables or parameters from parents', async () => {
     const prompts = {
       child: 'Child message: {{foo}}',

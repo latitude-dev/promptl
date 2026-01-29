@@ -573,7 +573,12 @@ export class Scan {
           (attribute: Attribute) => attribute.name === REFERENCE_PATH_ATTR,
         ) as Attribute
 
-        const refPromptPath = (refPromptAttribute.value as TemplateNode[])
+        if (refPromptAttribute.value === true) {
+          this.baseNodeError(errors.invalidReferencePath, node)
+          return
+        }
+
+        const refPromptPath = refPromptAttribute.value
           .map((node) => node.data)
           .join('')
 
