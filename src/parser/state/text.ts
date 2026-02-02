@@ -54,11 +54,17 @@ export function text(parser: Parser) {
     }
 
     // Check break conditions (only when not escaped)
-    if (
+    // Only break on --- if config is still possible (not seen yet and no substantive content before)
+    const configBlockPattern =
       char === '-' &&
       template[parser.index + 1] === '-' &&
       template[parser.index + 2] === '-' &&
       template[parser.index + 3] !== '-'
+
+    if (
+      configBlockPattern &&
+      !parser.configSeen &&
+      !parser.hasSubstantiveContent
     ) {
       break
     }
@@ -99,4 +105,9 @@ export function text(parser: Parser) {
   } as Text
 
   parser.current().children!.push(node)
+
+  // Mark that we have substantive content if the text contains non-whitespace
+  if (data.trim()) {
+    parser.hasSubstantiveContent = true
+  }
 }

@@ -26,4 +26,5 @@ export function config(parser: Parser) {
   } as Config
 
   parser.current().children!.push(node)
+  parser.configSeen = true
 }

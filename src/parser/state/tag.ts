@@ -80,6 +80,8 @@ export function tag(parser: Parser) {
   } else {
     parser.stack.push(element)
   }
+  
+  parser.hasSubstantiveContent = true
 }
 const regexWhitespaceOrSlashOrClosingTag = /(\s|\/|>)/
 

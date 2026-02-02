@@ -25,7 +25,11 @@ export default function fragment(parser: Parser): (parser: Parser) => void {
     return multiLineComment
   }
   if (parser.matchRegex(/-{3}(?!-)/)) {
-    return config
+    if (!parser.configSeen && !parser.hasSubstantiveContent) {
+      return config
+    }
+
+    // "---" is treated as text when it cannot be a config block
   }
 
   return text

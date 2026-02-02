@@ -196,6 +196,7 @@ export function mustache(parser: Parser) {
       expression,
     })
   }
+  parser.hasSubstantiveContent = true
 }
 
 function trimWhitespace(
