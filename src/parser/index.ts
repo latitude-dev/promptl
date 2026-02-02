@@ -19,6 +19,8 @@ export class Parser {
   stack: BaseNode[] = []
   lastAutoClosedTag: AutoClosedTag | null = null
   fragment: Fragment
+  configSeen: boolean = false
+  hasSubstantiveContent: boolean = false
 
   constructor(public template: string) {
     this.fragment = {

@@ -369,7 +369,7 @@ describe('config', async () => {
     expect(metadata.errors[0]!.code).toBe('invalid-config')
   })
 
-  it('fails when there is content before the config section', async () => {
+  it('treats --- as text when there is content before it', async () => {
     const prompt = removeCommonIndent(`
       Lorem ipsum
       ---
@@ -382,9 +382,8 @@ describe('config', async () => {
 
     const metadata = await scan({ prompt })
 
-    expect(metadata.errors.length).toBe(1)
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
-    expect(metadata.errors[0]!.code).toBe('invalid-config-placement')
+    expect(metadata.errors.length).toBe(0)
+    expect(metadata.config).toEqual({})
   })
 
   it('fails when the config is not valid YAML', async () => {
@@ -403,7 +402,7 @@ describe('config', async () => {
     expect(metadata.errors[0]!.code).toBe('invalid-config')
   })
 
-  it('fails when there are multiple config sections', async () => {
+  it('treats subsequent --- as text after config is closed', async () => {
     const prompt = removeCommonIndent(`
       ---
       foo: bar
@@ -415,9 +414,8 @@ describe('config', async () => {
 
     const metadata = await scan({ prompt })
 
-    expect(metadata.errors.length).toBe(1)
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
-    expect(metadata.errors[0]!.code).toBe('config-already-declared')
+    expect(metadata.errors.length).toBe(0)
+    expect(metadata.config).toEqual({ foo: 'bar' })
   })
 
   it('fails when the configuration is required and there is no config section', async () => {
@@ -531,7 +529,7 @@ describe('config', async () => {
     expect(metadata.errors[0]!.pos).toBe(expectedErrorPosition)
   })
 
-  it('fails when the config section is defined inside an if block', async () => {
+  it('treats --- as text when inside an if block (since if block is content)', async () => {
     const prompt = removeCommonIndent(`
       {{ if true }}
         ---
@@ -542,9 +540,8 @@ describe('config', async () => {
 
     const metadata = await scan({ prompt })
 
-    expect(metadata.errors.length).toBe(1)
-    expect(metadata.errors[0]).toBeInstanceOf(CompileError)
-    expect(metadata.errors[0]!.code).toBe('config-outside-root')
+    expect(metadata.errors.length).toBe(0)
+    expect(metadata.config).toEqual({})
   })
 })
 
