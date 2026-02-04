@@ -3,7 +3,6 @@ import { removeCommonIndent } from '$promptl/compiler/utils'
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { Adapters } from '../index'
-import { ContentType, MessageRole } from '$promptl/types'
 import { MessageInputItem } from '$promptl/providers/openai-responses/types'
 
 const toPromptl = Adapters.openaiResponses.toPromptl
@@ -21,10 +20,10 @@ describe('OpenAI response adapter', async () => {
         config: {},
         messages: [
           {
-            role: MessageRole.user,
+            role: 'user',
             content: [
               {
-                type: ContentType.text,
+                type: 'text',
                 text: 'Hello world!',
               },
             ],
@@ -49,10 +48,10 @@ describe('OpenAI response adapter', async () => {
         config: {},
         messages: [
           {
-            role: MessageRole.user,
+            role: 'user',
             content: [
               {
-                type: ContentType.text,
+                type: 'text',
                 text: 'Hello world!',
               },
             ],
@@ -91,19 +90,19 @@ describe('OpenAI response adapter', async () => {
         config: {},
         messages: [
           {
-            role: MessageRole.assistant,
+            role: 'assistant',
             content: [
               {
-                type: ContentType.text,
+                type: 'text',
                 text: 'Hello world!',
               },
               {
-                type: ContentType.image,
+                type: 'image',
                 image: 'https://image.source/',
                 detail: 'low',
               },
               {
-                type: ContentType.file,
+                type: 'file',
                 file: 'text content',
                 filename: 'text.txt',
                 file_id: '5678',
@@ -137,11 +136,11 @@ describe('OpenAI response adapter', async () => {
         config: {},
         messages: [
           {
-            role: MessageRole.user,
+            role: 'user',
             status: 'in_progress',
             content: [
               {
-                type: ContentType.text,
+                type: 'text',
                 text: 'Hello world!',
               },
             ],
@@ -174,12 +173,12 @@ describe('OpenAI response adapter', async () => {
         messages: [
           {
             id: '1234',
-            role: MessageRole.assistant,
+            role: 'assistant',
             status: 'in_progress',
             encrypted_content: 'encrypted content',
             content: [
               {
-                type: ContentType.text,
+                type: 'text',
                 text: 'Hello world!',
               },
             ],
@@ -221,11 +220,11 @@ describe('OpenAI response adapter', async () => {
         messages: [
           {
             id: '1234',
-            role: MessageRole.assistant,
+            role: 'assistant',
             status: 'in_progress',
             content: [
               {
-                type: ContentType.text,
+                type: 'text',
                 text: 'Hello world!',
                 annotations: [
                   {
@@ -267,11 +266,11 @@ describe('OpenAI response adapter', async () => {
         messages: [
           {
             id: '1234',
-            role: MessageRole.assistant,
+            role: 'assistant',
             status: 'in_progress',
             content: [
               {
-                type: ContentType.text,
+                type: 'text',
                 text: 'I have concerns',
               },
             ],
@@ -325,11 +324,11 @@ describe('OpenAI response adapter', async () => {
             messages: [
               {
                 id: 'ws_1234',
-                role: MessageRole.assistant,
+                role: 'assistant',
                 status: 'in_progress',
                 content: [
                   {
-                    type: ContentType.toolCall,
+                    type: 'tool-call',
                     toolCallId: '1234',
                     toolName: 'web_search_call',
                     toolArguments: {},
@@ -338,11 +337,11 @@ describe('OpenAI response adapter', async () => {
               },
               {
                 id: 'msg_1234',
-                role: MessageRole.assistant,
+                role: 'assistant',
                 status: 'in_progress',
                 content: [
                   {
-                    type: ContentType.toolCall,
+                    type: 'tool-call',
                     toolCallId: '1234',
                     toolName: 'web_search_call',
                     toolArguments: {
@@ -417,11 +416,11 @@ describe('OpenAI response adapter', async () => {
             messages: [
               {
                 id: 'fs_1234',
-                role: MessageRole.assistant,
+                role: 'assistant',
                 status: 'in_progress',
                 content: [
                   {
-                    type: ContentType.toolCall,
+                    type: 'tool-call',
                     toolCallId: '1234',
                     toolName: 'file_search_call',
                     toolArguments: {
@@ -441,11 +440,11 @@ describe('OpenAI response adapter', async () => {
               },
               {
                 id: 'msg_1234',
-                role: MessageRole.assistant,
+                role: 'assistant',
                 status: 'in_progress',
                 content: [
                   {
-                    type: ContentType.toolCall,
+                    type: 'tool-call',
                     toolCallId: '1234',
                     toolName: 'file_search_call',
                     toolArguments: {

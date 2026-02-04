@@ -5,12 +5,7 @@ import { complete } from '$promptl/compiler/test/helpers'
 import { removeCommonIndent } from '$promptl/compiler/utils'
 import CompileError from '$promptl/error/error'
 import { getExpectedError } from '$promptl/test/helpers'
-import {
-  MessageRole,
-  SystemMessage,
-  TextContent,
-  UserMessage,
-} from '$promptl/types'
+import { SystemMessage, TextContent, UserMessage } from '$promptl/types'
 import { describe, expect, it, vi } from 'vitest'
 
 const buildReferenceFn =
@@ -271,7 +266,7 @@ describe('ref tags', async () => {
     expect(steps).toBe(4)
     expect(messages.length).toBe(8) // 4 steps + 4 assistant responses
     const stepsContent = messages
-      .filter((m) => m.role != MessageRole.assistant)
+      .filter((m) => m.role !== 'assistant')
       .map((m) => (m.content[0] as TextContent).text)
     expect(stepsContent).toEqual(['Step 1', 'Substep 1', 'Substep 2', 'Step 2'])
   })
@@ -375,14 +370,14 @@ describe('ref tags', async () => {
       UserMessage,
       SystemMessage,
     ]
-    expect(firstMessage.role).toBe(MessageRole.user)
+    expect(firstMessage.role).toBe('user')
     expect(firstMessage.content.length).toBe(3)
     expect(firstMessage.content).toEqual([
       { type: 'text', text: '11' },
       { type: 'text', text: '12' },
       { type: 'text', text: '13' },
     ])
-    expect(secondMessage.role).toBe(MessageRole.system)
+    expect(secondMessage.role).toBe('system')
     expect(secondMessage.content.length).toBe(1)
     expect(secondMessage.content).toEqual([{ type: 'text', text: '10' }])
   })

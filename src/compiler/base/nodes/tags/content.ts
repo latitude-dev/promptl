@@ -1,7 +1,8 @@
 import { CUSTOM_CONTENT_TYPE_ATTR, TAG_NAMES } from '$promptl/constants'
 import errors from '$promptl/error/errors'
 import { ContentTag } from '$promptl/parser/interfaces'
-import { ContentType, ContentTypeTagName } from '$promptl/types'
+import { ContentTypeTagName } from '$promptl/types'
+import type { ContentType, MessageContent } from '$promptl/types'
 
 import { CompileNodeContext } from '../../types'
 
@@ -43,23 +44,28 @@ export async function compile(
     type = attributes[CUSTOM_CONTENT_TYPE_ATTR] as ContentType
     delete attributes[CUSTOM_CONTENT_TYPE_ATTR]
   } else {
-    const contentTypeKeysFromTagName = Object.fromEntries(
-      Object.entries(ContentTypeTagName).map(([k, v]) => [v, k]),
-    )
-    type =
-      ContentType[
-        contentTypeKeysFromTagName[node.name] as keyof typeof ContentType
-      ]
+    if (node.name === ContentTypeTagName.text) {
+      type = 'text'
+    } else if (node.name === ContentTypeTagName.image) {
+      type = 'image'
+    } else if (node.name === ContentTypeTagName.file) {
+      type = 'file'
+    } else if (node.name === ContentTypeTagName.toolCall) {
+      type = 'tool-call'
+    } else {
+      baseNodeError(errors.invalidContentType(String(node.name)), node)
+      return
+    }
   }
 
   const stray = popStrayText()
 
-  if (type === ContentType.text && stray.text.length > 0) {
+  if (type === 'text' && stray.text.length > 0) {
     addContent({
       node,
       content: {
         ...attributes,
-        type: ContentType.text,
+        type: 'text',
         text: stray.text,
         _promptlSourceMap: stray.sourceMap,
       },
@@ -67,7 +73,7 @@ export async function compile(
     return
   }
 
-  if (type === ContentType.image) {
+  if (type === 'image') {
     if (!stray.text.length) {
       baseNodeError(errors.emptyContentTag, node)
     }
@@ -76,7 +82,7 @@ export async function compile(
       node,
       content: {
         ...attributes,
-        type: ContentType.image,
+        type: 'image',
         image: stray.text,
         _promptlSourceMap: stray.sourceMap,
       },
@@ -84,7 +90,7 @@ export async function compile(
     return
   }
 
-  if (type === ContentType.file) {
+  if (type === 'file') {
     if (!stray.text.length) {
       baseNodeError(errors.emptyContentTag, node)
     }
@@ -96,7 +102,7 @@ export async function compile(
       node,
       content: {
         ...rest,
-        type: ContentType.file,
+        type: 'file',
         file: stray.text,
         mimeType: String(mimeType),
         _promptlSourceMap: stray.sourceMap,
@@ -105,7 +111,7 @@ export async function compile(
     return
   }
 
-  if (type == ContentType.toolCall) {
+  if (type === 'tool-call') {
     const { id, name, ...rest } = attributes
     if (!id) baseNodeError(errors.toolCallTagWithoutId, node)
     if (!name) baseNodeError(errors.toolCallWithoutName, node)
@@ -114,7 +120,7 @@ export async function compile(
     delete rest['arguments']
     if (toolArguments && typeof toolArguments === 'string') {
       try {
-        rest['arguments'] = JSON.parse(toolArguments)
+        toolArguments = JSON.parse(toolArguments)
       } catch {
         baseNodeError(errors.invalidToolCallArguments, node)
       }
@@ -124,11 +130,11 @@ export async function compile(
       node,
       content: {
         ...rest,
-        type: ContentType.toolCall,
+        type: 'tool-call',
         toolCallId: String(id),
         toolName: String(name),
-        toolArguments: (toolArguments ?? {}) as Record<string, unknown>,
-      },
+        args: (toolArguments ?? {}) as Record<string, unknown>,
+      } as MessageContent,
     })
     return
   }

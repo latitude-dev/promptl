@@ -1,9 +1,9 @@
-import {
-  ContentType,
-  FileContent,
-  MessageRole,
+import type {
   Conversation as PromptlConversation,
+  FileContent,
   Message as PromptlMessage,
+  MessageRole,
+  ToolResultContent,
 } from '$promptl/types'
 
 import { ProviderAdapter, type ProviderConversation } from '../adapter'
@@ -71,6 +71,18 @@ function toOpenAiFileData(fileContent: FileContent): string {
   return file.toString()
 }
 
+function formatToolResultOutput(result: unknown): string {
+  if (typeof result === 'string') return result
+  if (Array.isArray(result)) {
+    const textParts = result
+      .filter((item) => item && typeof item === 'object' && 'type' in item)
+      .filter((item) => (item as { type?: string }).type === 'text')
+      .map((item) => String((item as { text?: unknown }).text ?? ''))
+    if (textParts.length) return textParts.join('')
+  }
+  return JSON.stringify(result)
+}
+
 type ContentAndToolCalls = {
   content: MessageContentSimple[]
   toolCalls: OpenAIToolCallRequest[]
@@ -83,28 +95,28 @@ function fromPromptlContentToOpenAIResponseContent(
     (acc: ContentAndToolCalls, item: PromptlMessage['content'][0]) => {
       const type = item.type
 
-      if (type === ContentType.text) {
-        acc.content.push({ text: item.text, type: 'input_text' })
+      if (type === 'text') {
+        acc.content.push({ text: item.text ?? '', type: 'input_text' })
         return acc
-      } else if (type === ContentType.image) {
+      } else if (type === 'image') {
         acc.content.push({
           detail: 'auto',
           type: 'input_image',
           image_url: item.image.toString(),
         })
         return acc
-      } else if (type === ContentType.file) {
+      } else if (type === 'file') {
         acc.content.push({
           type: 'input_file',
           file_data: toOpenAiFileData(item),
         })
         return acc
-      } else if (ContentType.toolCall) {
+      } else if (type === 'tool-call') {
         acc.toolCalls.push({
           type: 'function_call',
           call_id: item.toolCallId,
           name: item.toolName,
-          arguments: JSON.stringify(item.toolArguments),
+          arguments: JSON.stringify(item.args),
         })
 
         return acc
@@ -123,14 +135,18 @@ function fromPromptlMessageToOpenAiResponse(
     promptlMessage.content,
   )
 
-  if (promptlMessage.role === MessageRole.tool) {
+  if (promptlMessage.role === 'tool') {
+    const toolResult = promptlMessage.content.find(
+      (item) => item.type === 'tool-result',
+    ) as ToolResultContent | undefined
+    if (!toolResult) {
+      throw new Error('Tool messages must include tool-result content')
+    }
     return [
       {
         type: 'function_call_output',
-        call_id: promptlMessage.toolId,
-        output: promptlMessage.content
-          .map((c) => (c.type == ContentType.text ? c.text : ''))
-          .join(''),
+        call_id: toolResult.toolCallId,
+        output: formatToolResultOutput(toolResult.result),
         status: 'completed',
       } satisfies ToolCallResponse,
     ]
@@ -154,67 +170,67 @@ type ToolMappings = {
 }
 const fromOpenAiResponseToPromptlMessage =
   (toolMappings: ToolMappings) =>
-    (message: MessageInputItem): PromptlMessage | null => {
-      if (isReasoning(message)) {
-        return parseReasoning(message)
-      }
-
-      if (isOutputMessage(message)) {
-        return parseOutputMessage({
-          message,
-          webSearch: toolMappings.websearch,
-          fileSearch: toolMappings.fileSearch,
-        })
-      }
-
-      if (isInputMessage(message)) {
-        return parseInputMessage(message)
-      }
-
-      if (isFunctionCall(message)) {
-        toolMappings.userTools.set(message.call_id, message.name)
-        return parseFunctionCall(message)
-      }
-
-      if (isFunctionCallOutput(message)) {
-        return parseFunctionCallOutput({
-          message,
-          toolNameMap: toolMappings.userTools,
-        })
-      }
-
-      if (isWebsearchCall(message)) {
-        return parseWebsearchCall({
-          message,
-          webSearch: toolMappings.websearch,
-        })
-      }
-
-      if (isFileSearchCall(message)) {
-        return parseFileSearch({
-          message,
-          fileSearch: toolMappings.fileSearch,
-        })
-      }
-
-      if (isSimpleInputMessage(message)) {
-        return parseSimpleInputMessage(message)
-      }
-
-      if (message.type === 'item_reference') return null
-
-      if (message.type === 'computer_call') {
-        throw new Error('Not implemented computer_call')
-      }
-
-      if (message.type === 'computer_call_output') {
-        throw new Error('Not implemented computer_call_output')
-      }
-
-      throw new Error(
-        `Unknown message type ${message.type} in OpenAIResponse adapter`,
-      )
+  (message: MessageInputItem): PromptlMessage | null => {
+    if (isReasoning(message)) {
+      return parseReasoning(message)
     }
+
+    if (isOutputMessage(message)) {
+      return parseOutputMessage({
+        message,
+        webSearch: toolMappings.websearch,
+        fileSearch: toolMappings.fileSearch,
+      })
+    }
+
+    if (isInputMessage(message)) {
+      return parseInputMessage(message)
+    }
+
+    if (isFunctionCall(message)) {
+      toolMappings.userTools.set(message.call_id, message.name)
+      return parseFunctionCall(message)
+    }
+
+    if (isFunctionCallOutput(message)) {
+      return parseFunctionCallOutput({
+        message,
+        toolNameMap: toolMappings.userTools,
+      })
+    }
+
+    if (isWebsearchCall(message)) {
+      return parseWebsearchCall({
+        message,
+        webSearch: toolMappings.websearch,
+      })
+    }
+
+    if (isFileSearchCall(message)) {
+      return parseFileSearch({
+        message,
+        fileSearch: toolMappings.fileSearch,
+      })
+    }
+
+    if (isSimpleInputMessage(message)) {
+      return parseSimpleInputMessage(message)
+    }
+
+    if (message.type === 'item_reference') return null
+
+    if (message.type === 'computer_call') {
+      throw new Error('Not implemented computer_call')
+    }
+
+    if (message.type === 'computer_call_output') {
+      throw new Error('Not implemented computer_call_output')
+    }
+
+    throw new Error(
+      `Unknown message type ${message.type} in OpenAIResponse adapter`,
+    )
+  }
 
 export const OpenAIResponsesAdapter: ProviderAdapter<MessageInputItem> = {
   type: 'openaiResponses',
@@ -236,10 +252,10 @@ export const OpenAIResponsesAdapter: ProviderAdapter<MessageInputItem> = {
         config: openAiConversation.config,
         messages: [
           {
-            role: MessageRole.user,
+            role: 'user',
             content: [
               {
-                type: ContentType.text,
+                type: 'text',
                 text: messages,
               },
             ],

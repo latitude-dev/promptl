@@ -2,12 +2,7 @@ import {
   MessageInputItem,
   WebSearchCall,
 } from '$promptl/providers/openai-responses/types'
-import {
-  AssistantMessage,
-  ContentType,
-  MessageRole,
-  ToolCallContent,
-} from '$promptl/types'
+import { Message as PromptlMessage, ToolRequestContent } from '$promptl/types'
 
 export function isWebsearchCall(
   message: MessageInputItem,
@@ -26,16 +21,16 @@ export function parseWebsearchCall({
   webSearch.set(callId, callId)
 
   return {
-    role: MessageRole.assistant,
+    role: 'assistant',
     id: inputMessage.id,
     status: inputMessage.status,
     content: [
       {
-        type: ContentType.toolCall,
+        type: 'tool-call',
         toolCallId: callId,
         toolName: inputMessage.type,
-        toolArguments: {},
-      } satisfies ToolCallContent,
+        args: {},
+      } satisfies ToolRequestContent,
     ],
-  } satisfies AssistantMessage
+  } as PromptlMessage
 }

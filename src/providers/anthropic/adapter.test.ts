@@ -1,6 +1,5 @@
 import { render } from '$promptl/compiler'
 import { removeCommonIndent } from '$promptl/compiler/utils'
-import { MessageRole } from '$promptl/types'
 import { describe, expect, it } from 'vitest'
 
 import { Adapters } from '..'
@@ -39,7 +38,7 @@ describe('Anthropic adapter', async () => {
     const { messages } = await render({ prompt, adapter: Adapters.anthropic })
     expect(messages).toEqual([
       {
-        role: MessageRole.user,
+        role: 'user',
         content: [
           { type: 'text', text: 'Hello world!' },
           {
@@ -75,7 +74,7 @@ describe('Anthropic adapter', async () => {
     const { messages } = await render({ prompt, adapter: Adapters.anthropic })
     expect(messages).toEqual([
       {
-        role: MessageRole.assistant,
+        role: 'assistant',
         content: [
           { type: 'text', text: 'Hello world!' },
           {
@@ -100,7 +99,7 @@ describe('Anthropic adapter', async () => {
     expect(messages).toEqual([
       {
         toolName: 'temperature',
-        role: MessageRole.user,
+        role: 'user',
         content: [
           {
             type: 'tool_result',

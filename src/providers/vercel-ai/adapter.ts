@@ -1,13 +1,12 @@
-import {
-  ContentType,
-  MessageRole,
+import type {
   Conversation as PromptlConversation,
-  ImageContent as PromptlImageContent,
   FileContent as PromptlFileContent,
+  ImageContent as PromptlImageContent,
   Message as PromptlMessage,
   MessageContent as PromptlMessageContent,
   TextContent as PromptlTextContent,
-  ToolCallContent as PromptlToolCallContent,
+  ToolResultContent as PromptlToolContent,
+  ToolRequestContent as PromptlToolRequestContent,
 } from '$promptl/types'
 
 import { ProviderAdapter, type ProviderConversation } from '../adapter'
@@ -18,7 +17,6 @@ import {
   FilePart as VercelAIFilePart,
   Message as VercelAIMessage,
   MessageContent as VercelAIMessageContent,
-  TextPart as VercelAITextPart,
   ToolCallPart as VercelAIToolCallPart,
   UserMessage as VercelAIUserMessage,
   SystemMessage as VercelAISystemMessage,
@@ -61,7 +59,7 @@ function toPromptlImage(imageContent: VercelAIImagePart): PromptlImageContent {
   const { image, ...rest } = imageContent
   return {
     ...rest,
-    type: ContentType.image,
+    type: 'image',
     image: image,
   }
 }
@@ -81,16 +79,16 @@ function toPromptlFile(fileContent: VercelAIFilePart): PromptlFileContent {
 
   return {
     ...rest,
-    type: ContentType.file,
+    type: 'file',
     file: data,
     mimeType: mediaType,
   }
 }
 
 function promptlToVercelAI(message: PromptlMessage): VercelAIMessage {
-  if (message.role === MessageRole.system) {
+  if (message.role === 'system' || message.role === 'developer') {
     const { content, ...rest } = message
-    if (content.some((c) => c.type !== ContentType.text)) {
+    if (content.some((c) => c.type !== 'text')) {
       throw new Error(
         `Unsupported content type for system message: ${content.map((c) => c.type).join(', ')}`,
       )
@@ -100,39 +98,39 @@ function promptlToVercelAI(message: PromptlMessage): VercelAIMessage {
 
     return {
       ...rest,
-      role: MessageRole.system,
+      role: 'system',
       content: text,
     } as VercelAISystemMessage
   }
 
-  if (message.role === MessageRole.user) {
+  if (message.role === 'user') {
     const { content, ...rest } = message
 
     const adaptedContent = content.map((c) => {
-      if (c.type === ContentType.image) return toVercelAIImage(c)
-      if (c.type === ContentType.file) return toVercelAIFile(c)
+      if (c.type === 'image') return toVercelAIImage(c)
+      if (c.type === 'file') return toVercelAIFile(c)
       return c as VercelAIMessageContent
     })
 
     return {
       ...rest,
-      role: MessageRole.user,
+      role: 'user',
       content: adaptedContent,
     } as VercelAIUserMessage
   }
 
-  if (message.role === MessageRole.assistant) {
+  if (message.role === 'assistant') {
     const { content, ...rest } = message
 
     const adaptedContent = content.map((c) => {
-      if (c.type === ContentType.image) return toVercelAIImage(c)
-      if (c.type === ContentType.file) return toVercelAIFile(c)
-      if (c.type === ContentType.toolCall) {
+      if (c.type === 'image') return toVercelAIImage(c)
+      if (c.type === 'file') return toVercelAIFile(c)
+      if (c.type === 'tool-call') {
         return {
           type: VercelAIContentType.toolCall,
           toolCallId: c.toolCallId,
           toolName: c.toolName,
-          args: c.toolArguments,
+          args: c.args,
         } as VercelAIToolCallPart
       }
       return c as VercelAIMessageContent
@@ -140,57 +138,51 @@ function promptlToVercelAI(message: PromptlMessage): VercelAIMessage {
 
     return {
       ...rest,
-      role: MessageRole.assistant,
+      role: 'assistant',
       content: adaptedContent,
     } as VercelAIAssistantMessage
   }
 
-  if (message.role === MessageRole.tool) {
-    const { toolId, toolName, content, ...rest } = message
-    const adaptedContent = content.map((c) => {
-      if (c.type === ContentType.image) return toVercelAIImage(c)
-      if (c.type === ContentType.file) return toVercelAIFile(c)
-      return {
-        type: VercelAIContentType.text,
-        text: c.type === ContentType.text ? c.text : JSON.stringify(c),
-      } as VercelAITextPart
-    })
-
+  if (message.role === 'tool') {
+    const toolResult = message.content.find((c) => c.type === 'tool-result') as
+      | PromptlToolContent
+      | undefined
+    if (!toolResult) {
+      throw new Error('Tool messages must include tool-result content')
+    }
     return {
-      ...rest,
-      role: MessageRole.tool,
+      role: 'tool',
       content: [
         {
           type: VercelAIContentType.toolResult,
-          toolCallId: toolId,
-          toolName: toolName,
-          result:
-            adaptedContent.length === 1
-              ? adaptedContent[0]!.text
-              : adaptedContent.map((c) => c.text).join(''),
+          toolCallId: toolResult.toolCallId,
+          toolName: toolResult.toolName,
+          result: toolResult.result,
+          isError: toolResult.isError,
         },
       ],
     }
   }
 
-  throw new Error(`Unsupported message role: ${message.role}`)
+  const role = (message as { role?: string }).role
+  throw new Error(`Unsupported message role: ${role}`)
 }
 
 const vercelAIToPromptl =
   (toolRequestsNamesById: Map<string, string>) =>
   (message: VercelAIMessage): PromptlMessage => {
-    if (message.role === MessageRole.system) {
+    if (message.role === 'system') {
       return {
-        role: MessageRole.system,
-        content: [{ type: ContentType.text, text: message.content as string }],
+        role: 'system',
+        content: [{ type: 'text', text: message.content as string }],
       }
     }
 
-    if (message.role === MessageRole.user) {
+    if (message.role === 'user') {
       const content: PromptlMessageContent[] = []
 
       if (typeof message.content === 'string') {
-        content.push({ type: ContentType.text, text: message.content })
+        content.push({ type: 'text', text: message.content })
       } else if (Array.isArray(message.content)) {
         content.push(
           ...message.content.map((c) => {
@@ -198,7 +190,7 @@ const vercelAIToPromptl =
             if (c.type === VercelAIContentType.file) return toPromptlFile(c)
             if (c.type === VercelAIContentType.text) {
               return {
-                type: ContentType.text,
+                type: 'text',
                 text: c.text,
               } as PromptlTextContent
             }
@@ -209,16 +201,16 @@ const vercelAIToPromptl =
 
       return {
         ...message,
-        role: MessageRole.user,
+        role: 'user',
         content,
       }
     }
 
-    if (message.role === MessageRole.assistant) {
+    if (message.role === 'assistant') {
       const content: PromptlMessageContent[] = []
 
       if (typeof message.content === 'string') {
-        content.push({ type: ContentType.text, text: message.content })
+        content.push({ type: 'text', text: message.content })
       } else if (Array.isArray(message.content)) {
         content.push(
           ...message.content.map((c) => {
@@ -226,18 +218,18 @@ const vercelAIToPromptl =
             if (c.type === VercelAIContentType.file) return toPromptlFile(c)
             if (c.type === VercelAIContentType.text) {
               return {
-                type: ContentType.text,
+                type: 'text',
                 text: c.text,
               } as PromptlTextContent
             }
             if (c.type === VercelAIContentType.toolCall) {
               toolRequestsNamesById.set(c.toolCallId, c.toolName)
               return {
-                type: ContentType.toolCall,
+                type: 'tool-call',
                 toolCallId: c.toolCallId,
                 toolName: c.toolName,
-                toolArguments: c.args,
-              } as PromptlToolCallContent
+                args: c.args,
+              } as PromptlToolRequestContent
             }
             throw new Error(`Unsupported content type: ${c.type}`)
           }),
@@ -246,48 +238,34 @@ const vercelAIToPromptl =
 
       return {
         ...message,
-        role: MessageRole.assistant,
+        role: 'assistant',
         content,
       }
     }
 
-    if (message.role === MessageRole.tool) {
-      const content: PromptlMessageContent[] = []
-      let toolCallId = ''
-      let toolName = ''
-
-      if (Array.isArray(message.content)) {
-        message.content.forEach((c) => {
-          if (c.type === VercelAIContentType.toolResult) {
-            toolCallId = c.toolCallId
-            toolName = c.toolName
-            // Convert tool result to text content for PromptL
-            content.push({
-              type: ContentType.text,
-              text:
-                typeof c.result === 'string'
-                  ? c.result
-                  : JSON.stringify(c.result),
-            } as PromptlTextContent)
-          } else if (c.type === VercelAIContentType.text) {
-            content.push({ type: ContentType.text, text: c.text })
-          } else if (c.type === VercelAIContentType.image) {
-            content.push(toPromptlImage(c))
-          } else if (c.type === VercelAIContentType.file) {
-            content.push(toPromptlFile(c))
-          }
-        })
+    if (message.role === 'tool') {
+      const toolResult = Array.isArray(message.content)
+        ? message.content.find((c) => c.type === VercelAIContentType.toolResult)
+        : undefined
+      if (!toolResult) {
+        throw new Error('Tool messages must include tool-result content')
       }
 
       return {
         ...message,
-        role: MessageRole.tool,
-        toolId: toolCallId,
-        toolName:
-          toolName ||
-          (toolCallId ? toolRequestsNamesById.get(toolCallId) : '') ||
-          '',
-        content,
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId: toolResult.toolCallId,
+            toolName:
+              toolResult.toolName ||
+              toolRequestsNamesById.get(toolResult.toolCallId) ||
+              '',
+            result: toolResult.result,
+            isError: toolResult.isError,
+          },
+        ],
       }
     }
 

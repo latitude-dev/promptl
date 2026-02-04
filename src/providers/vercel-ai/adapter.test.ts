@@ -1,6 +1,5 @@
 import { render } from '$promptl/compiler'
 import { removeCommonIndent } from '$promptl/compiler/utils'
-import { MessageRole, ContentType } from '$promptl/types'
 import { describe, it, expect } from 'vitest'
 
 import { Adapters } from '..'
@@ -14,7 +13,7 @@ describe('VercelAIAdapter', () => {
     })
     expect(messages).toEqual([
       {
-        role: MessageRole.system,
+        role: 'system',
         content: 'You are a helpful assistant',
       },
     ])
@@ -35,12 +34,12 @@ describe('VercelAIAdapter', () => {
     })
     expect(messages).toEqual([
       {
-        role: MessageRole.user,
+        role: 'user',
         content: [
-          { type: ContentType.text, text: 'Hello world!' },
-          { type: ContentType.image, image: 'https://image.source/' },
+          { type: 'text', text: 'Hello world!' },
+          { type: 'image', image: 'https://image.source/' },
           {
-            type: ContentType.file,
+            type: 'file',
             data: 'text content',
             mediaType: 'text/plain',
           },
@@ -62,10 +61,8 @@ describe('VercelAIAdapter', () => {
     })
     expect(messages).toEqual([
       {
-        role: MessageRole.assistant,
-        content: [
-          { type: ContentType.text, text: 'I will help you with that.' },
-        ],
+        role: 'assistant',
+        content: [{ type: 'text', text: 'I will help you with that.' }],
       },
     ])
   })
@@ -83,7 +80,7 @@ describe('VercelAIAdapter', () => {
     })
     expect(messages).toEqual([
       {
-        role: MessageRole.tool,
+        role: 'tool',
         content: [
           {
             type: 'tool-result',
@@ -112,7 +109,7 @@ describe('VercelAIAdapter', () => {
     expect(config).toEqual({ temperature: 0.8, maxTokens: 1000 })
     expect(messages).toEqual([
       {
-        role: MessageRole.system,
+        role: 'system',
         content: 'You are a helpful assistant',
       },
     ])
@@ -134,14 +131,14 @@ describe('VercelAIAdapter', () => {
     })
 
     expect(messages).toHaveLength(1)
-    expect(messages[0]?.role).toBe(MessageRole.assistant)
+    expect(messages[0]?.role).toBe('assistant')
     expect(messages[0]?.content).toHaveLength(2)
     expect(messages[0]?.content[0]).toEqual({
-      type: ContentType.text,
+      type: 'text',
       text: 'I will help you with that.',
     })
     expect(messages[0]?.content[1]).toMatchObject({
-      type: ContentType.toolCall,
+      type: 'tool-call',
       toolCallId: 'call_123',
       toolName: 'get_weather',
     })

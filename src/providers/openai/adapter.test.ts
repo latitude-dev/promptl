@@ -1,6 +1,5 @@
 import { render } from '$promptl/compiler'
 import { removeCommonIndent } from '$promptl/compiler/utils'
-import { MessageRole } from '$promptl/types'
 import { describe, expect, it } from 'vitest'
 
 import { Adapters } from '..'
@@ -12,7 +11,7 @@ describe('OpenAI adapter', async () => {
     const { messages } = await render({ prompt, adapter: Adapters.openai })
     expect(messages).toEqual([
       {
-        role: MessageRole.system,
+        role: 'system',
         content: 'Hello world!', // System messages are defined as a string in OpenAI
       },
     ])
@@ -31,7 +30,7 @@ describe('OpenAI adapter', async () => {
     const { messages } = await render({ prompt, adapter: Adapters.openai })
     expect(messages).toEqual([
       {
-        role: MessageRole.user,
+        role: 'user',
         name: 'Image master',
         content: [
           { type: 'text', text: 'Hello world!' },
@@ -58,7 +57,7 @@ describe('OpenAI adapter', async () => {
     const { messages } = await render({ prompt, adapter: Adapters.openai })
     expect(messages).toEqual([
       {
-        role: MessageRole.assistant,
+        role: 'assistant',
         content: [{ type: 'text', text: 'Hello world!' }],
         tool_calls: [
           {
@@ -84,7 +83,7 @@ describe('OpenAI adapter', async () => {
       adapter: Adapters.openai,
     })
 
-    expect(messagesWithoutToolCalls[0]!.role).toBe(MessageRole.assistant)
+    expect(messagesWithoutToolCalls[0]!.role).toBe('assistant')
     expect(
       (messagesWithoutToolCalls[0] as OpenAiAssistantMessage).tool_calls,
     ).not.toBeDefined()
@@ -100,7 +99,7 @@ describe('OpenAI adapter', async () => {
     const { messages } = await render({ prompt, adapter: Adapters.openai })
     expect(messages).toEqual([
       {
-        role: MessageRole.tool,
+        role: 'tool',
         tool_call_id: '1234',
         toolName: 'temperature',
         content: [{ type: 'text', text: '17ºC' }],

@@ -19,12 +19,8 @@ import type {
   Fragment,
   TemplateNode,
 } from '$promptl/parser/interfaces'
-import {
-  Config,
-  ContentTypeTagName,
-  ConversationMetadata,
-  MessageRole,
-} from '$promptl/types'
+import { ContentTypeTagName } from '$promptl/types'
+import type { Config, ConversationMetadata, MessageRole } from '$promptl/types'
 import { Node as LogicalExpression } from 'estree'
 import yaml, { Node as YAMLItem } from 'yaml'
 
@@ -500,12 +496,12 @@ export class Scan {
           attributes.delete(CUSTOM_MESSAGE_ROLE_ATTR)
         }
 
-        if (role === MessageRole.tool && !attributes.has('id')) {
+        if (role === 'tool' && !attributes.has('id')) {
           this.baseNodeError(errors.toolMessageWithoutId, node)
           return
         }
 
-        if (role === MessageRole.tool && !attributes.has('name')) {
+        if (role === 'tool' && !attributes.has('name')) {
           this.baseNodeError(errors.toolMessageWithoutName, node)
           return
         }
@@ -528,10 +524,7 @@ export class Scan {
           })
         }
 
-        if (
-          role !== MessageRole.assistant &&
-          this.accumulatedToolCalls.length > 0
-        ) {
+        if (role !== 'assistant' && this.accumulatedToolCalls.length > 0) {
           this.accumulatedToolCalls.forEach((toolCallNode) => {
             this.baseNodeError(errors.invalidToolCallPlacement, toolCallNode)
             return
@@ -543,7 +536,7 @@ export class Scan {
       }
 
       if (isRefTag(node)) {
-        if (node.children?.length ?? 0 > 0) {
+        if ((node.children?.length ?? 0) > 0) {
           this.baseNodeError(errors.referenceTagHasContent, node)
           return
         }

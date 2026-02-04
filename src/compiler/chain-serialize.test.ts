@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import { Adapters } from '$promptl/providers'
-import { MessageRole } from '$promptl/types'
 import { Chain } from './chain'
 import { removeCommonIndent } from './utils'
 
@@ -125,7 +124,7 @@ describe('serialize chain', async () => {
       prompt,
       parameters: { name: 'Paco' },
       adapter: Adapters.default,
-      defaultRole: MessageRole.user,
+      defaultRole: 'user',
     })
     await chain.step()
     const serialized = chain.serialize()

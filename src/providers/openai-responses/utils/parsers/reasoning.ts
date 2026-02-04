@@ -1,5 +1,5 @@
 import { MessageInputItem } from '$promptl/providers/openai-responses/types'
-import { AssistantMessage, ContentType, MessageRole } from '$promptl/types'
+import { Message as PromptlMessage } from '$promptl/types'
 import { ResponseReasoningItem } from 'openai/resources/responses/responses'
 
 export function isReasoning(
@@ -11,12 +11,12 @@ export function isReasoning(
 export function parseReasoning(message: ResponseReasoningItem) {
   return {
     id: message.id,
-    role: MessageRole.assistant,
+    role: 'assistant',
     content: message.summary.map((summary) => ({
-      type: ContentType.text,
+      type: 'text',
       text: summary.text,
     })),
     status: message.status,
     encrypted_content: message.encrypted_content,
-  } satisfies AssistantMessage
+  } as PromptlMessage
 }

@@ -3,8 +3,6 @@
  * Based on the AI SDK Core message structure
  */
 
-import { MessageRole } from '$promptl/types'
-
 export enum ContentType {
   text = 'text',
   image = 'image',
@@ -66,22 +64,22 @@ export type MessageContent =
   | ReasoningPart
 
 export type SystemMessage = {
-  role: MessageRole.system
+  role: 'system'
   content: string
 }
 
 export type UserMessage = {
-  role: MessageRole.user
+  role: 'user'
   content: string | MessageContent[]
 }
 
 export type AssistantMessage = {
-  role: MessageRole.assistant
+  role: 'assistant'
   content: string | MessageContent[]
 }
 
 export type ToolMessage = {
-  role: MessageRole.tool
+  role: 'tool'
   content: MessageContent[]
 }
 

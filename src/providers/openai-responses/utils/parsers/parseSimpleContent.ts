@@ -6,14 +6,12 @@ import {
 } from '$promptl/providers/openai-responses/types'
 import { getMimeType } from '$promptl/providers/utils/getMimeType'
 import {
-  ContentType,
   FileContent,
   ImageContent,
-  MessageRole,
   TextContent,
+  DeveloperMessage,
   AssistantMessage,
   SystemMessage,
-  DeveloperMessage,
   UserMessage,
 } from '$promptl/types'
 
@@ -43,14 +41,14 @@ export function isSimpleContent(
 export function parseSimpleContent(content: MessageContentSimple) {
   if (content.type === 'input_text') {
     return {
-      type: ContentType.text,
+      type: 'text',
       text: content.text,
     } satisfies TextContent
   }
 
   if (content.type === 'input_image' && content.image_url) {
     return {
-      type: ContentType.image,
+      type: 'image',
       image: content.image_url,
       detail: content.detail,
     } satisfies ImageContent
@@ -58,7 +56,7 @@ export function parseSimpleContent(content: MessageContentSimple) {
 
   if (content.type === 'input_file' && content.file_data) {
     return {
-      type: ContentType.file,
+      type: 'file',
       file: content.file_data,
       filename: content.filename,
       file_id: content.file_id,
@@ -88,18 +86,18 @@ export function isSimpleInputMessage(
 export function parseSimpleInputMessage(message: SimpleInputMessage) {
   if (typeof message.content === 'string') {
     return {
-      role: MessageRole[message.role],
+      role: message.role,
       content: [
         {
-          type: ContentType.text,
+          type: 'text',
           text: message.content,
         } satisfies TextContent,
       ],
-    } satisfies PromptlMessage
+    } as PromptlMessage
   }
 
   return {
-    role: MessageRole[message.role],
+    role: message.role,
     content: message.content.map(parseSimpleContent),
-  } satisfies PromptlMessage
+  } as PromptlMessage
 }

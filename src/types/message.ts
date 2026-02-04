@@ -1,11 +1,13 @@
-/* Message Content */
+export type ContentType =
+  | 'file'
+  | 'image'
+  | 'reasoning'
+  | 'redacted-reasoning'
+  | 'text'
+  | 'tool-call'
+  | 'tool-result'
 
-export enum ContentType {
-  text = 'text',
-  image = 'image',
-  file = 'file',
-  toolCall = 'tool-call',
-}
+export type MessageRole = 'assistant' | 'developer' | 'system' | 'tool' | 'user'
 
 export enum ContentTypeTagName {
   // This is used to translate between the tag name and the actual tag value
@@ -20,84 +22,108 @@ export type PromptlSourceRef = {
   end: number
   identifier?: string
 }
-
 interface IMessageContent {
-  type: ContentType
+  type: string
   _promptlSourceMap?: PromptlSourceRef[]
   [key: string]: unknown
 }
-
-export type TextContent = IMessageContent & {
-  type: ContentType.text
+export type ReasoningContent = IMessageContent & {
+  type: 'reasoning'
   text: string
+  id?: string
+  isStreaming?: boolean
 }
-
+export type RedactedReasoningContent = IMessageContent & {
+  type: 'redacted-reasoning'
+  data: string
+}
+export type TextContent = IMessageContent & {
+  type: 'text'
+  text: string | undefined
+}
 export type ImageContent = IMessageContent & {
-  type: ContentType.image
+  type: 'image'
   image: string | Uint8Array | Buffer | ArrayBuffer | URL
 }
-
 export type FileContent = IMessageContent & {
-  type: ContentType.file
+  type: 'file'
   file: string | Uint8Array | Buffer | ArrayBuffer | URL
   mimeType: string
 }
-
-export type ToolCallContent = {
-  type: ContentType.toolCall
+export type ToolResultContent = {
+  type: 'tool-result'
   toolCallId: string
   toolName: string
-  toolArguments: Record<string, unknown>
+  result: unknown
+  isError?: boolean
 }
-
+export type ToolRequestContent = {
+  type: 'tool-call'
+  toolCallId: string
+  toolName: string
+  args: Record<string, unknown>
+}
 export type MessageContent =
-  | TextContent
-  | ImageContent
   | FileContent
-  | ToolCallContent
+  | ImageContent
+  | ReasoningContent
+  | RedactedReasoningContent
+  | TextContent
+  | ToolResultContent
+  | ToolRequestContent
 
-/* Message */
-
-export enum MessageRole {
-  system = 'system',
-  developer = 'developer',
-  user = 'user',
-  assistant = 'assistant',
-  tool = 'tool',
-}
-
-interface IMessage {
-  role: MessageRole
+export type SystemMessage = {
+  role: 'system'
   content: MessageContent[]
-  [key: string]: unknown
 }
 
-export type SystemMessage = IMessage & {
-  role: MessageRole.system
-}
-
-export type DeveloperMessage = IMessage & {
-  role: MessageRole.developer
-}
-
-export type UserMessage = IMessage & {
-  role: MessageRole.user
+export type UserMessage = {
+  role: 'user'
+  content: MessageContent[]
   name?: string
 }
 
-export type AssistantMessage = IMessage & {
-  role: MessageRole.assistant
+export type DeveloperMessage = {
+  role: 'developer'
+  content: MessageContent[]
 }
 
-export type ToolMessage = IMessage & {
-  role: MessageRole.tool
-  toolName: string
-  toolId: string
+export type AssistantMessage = {
+  role: 'assistant'
+  content: MessageContent[]
+  // DEPRECATED but keeping around for backwards compatibility
+  toolCalls?: ToolCall[] | null
+  _isGeneratingToolCall?: boolean
+}
+
+export type ToolMessage = {
+  role: 'tool'
+  content: (TextContent | ToolResultContent)[]
 }
 
 export type Message =
-  | SystemMessage
-  | DeveloperMessage
-  | UserMessage
   | AssistantMessage
+  | DeveloperMessage
+  | SystemMessage
   | ToolMessage
+  | UserMessage
+
+export type ToolCall = {
+  id: string
+  name: string
+  arguments: Record<string, unknown>
+}
+
+export type Config = Record<string, unknown>
+export type Conversation = {
+  config: Config
+  messages: Message[]
+}
+export type ConversationMetadata = {
+  resolvedPrompt: string
+  config: Config
+  errors: any[]
+  parameters: Set<string>
+  setConfig: (config: Config) => string
+  includedPromptPaths: Set<string>
+}

@@ -2,12 +2,7 @@ import {
   FileSearchCall,
   MessageInputItem,
 } from '$promptl/providers/openai-responses/types'
-import {
-  AssistantMessage,
-  ContentType,
-  MessageRole,
-  ToolCallContent,
-} from '$promptl/types'
+import { Message as PromptlMessage, ToolRequestContent } from '$promptl/types'
 
 export function isFileSearchCall(
   message: MessageInputItem,
@@ -25,19 +20,19 @@ export function parseFileSearch({
   const callId = message.id.replace(/^fs_/, '')
   fileSearch.set(callId, callId)
   return {
-    role: MessageRole.assistant,
+    role: 'assistant',
     id: message.id,
     status: message.status,
     content: [
       {
-        type: ContentType.toolCall,
+        type: 'tool-call',
         toolCallId: callId,
         toolName: message.type,
-        toolArguments: {
+        args: {
           queries: message.queries,
           results: message.results,
         },
-      } satisfies ToolCallContent,
+      } satisfies ToolRequestContent,
     ],
-  } satisfies AssistantMessage
+  } as PromptlMessage
 }
