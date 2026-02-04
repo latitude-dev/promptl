@@ -3,18 +3,13 @@ import {
   ResponseInputMessage,
 } from '$promptl/providers/openai-responses/types'
 import { parseSimpleContent } from '$promptl/providers/openai-responses/utils/parsers/parseSimpleContent'
-import {
-  MessageRole,
-  SystemMessage,
-  DeveloperMessage,
-  UserMessage,
-} from '$promptl/types'
+import { DeveloperMessage, SystemMessage, UserMessage } from '$promptl/types'
 
 type InputMessageRole = ResponseInputMessage['role']
 
 type PromptlMessage = SystemMessage | DeveloperMessage | UserMessage
 function fromOpenAIRoleToPromptlRole(role: InputMessageRole) {
-  return MessageRole[role]
+  return role
 }
 
 export function isInputMessage(
@@ -32,5 +27,5 @@ export function parseInputMessage(message: ResponseInputMessage) {
     role: fromOpenAIRoleToPromptlRole(message.role),
     status: message.status,
     content: message.content.map(parseSimpleContent),
-  } satisfies PromptlMessage
+  } as PromptlMessage
 }

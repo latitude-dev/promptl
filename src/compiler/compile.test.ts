@@ -1,13 +1,7 @@
 import CompileError from '$promptl/error/error'
 import { getExpectedError } from '$promptl/test/helpers'
-import {
-  ContentType,
-  Message,
-  MessageContent,
-  MessageRole,
-  TextContent,
-  toPromptLFile,
-} from '$promptl/types'
+import type { Message, MessageContent, TextContent } from '$promptl/types'
+import { toPromptLFile } from '$promptl/types'
 import { describe, expect, it } from 'vitest'
 
 import { Adapters, render } from '$promptl/index'
@@ -40,7 +34,7 @@ describe('automatic message grouping', async () => {
     const prompt = 'Hello world!'
     const result = await render({ prompt, adapter: Adapters.default })
     const message = result.messages[0]!
-    expect(message.role).toBe(MessageRole.system)
+    expect(message.role).toBe('system')
   })
 
   it('groups consecutive contents with the same role', async () => {
@@ -64,26 +58,26 @@ describe('automatic message grouping', async () => {
 
     expect(messages.length).toBe(1)
     const message = messages[0]!
-    expect(message.role).toBe(MessageRole.system)
+    expect(message.role).toBe('system')
     expect(message.content.length).toBe(7)
-    expect(message.content[0]!.type).toBe(ContentType.text)
-    expect(message.content[1]!.type).toBe(ContentType.text)
-    expect(message.content[2]!.type).toBe(ContentType.text)
-    expect(message.content[3]!.type).toBe(ContentType.image)
-    expect(message.content[4]!.type).toBe(ContentType.text)
-    expect(message.content[5]!.type).toBe(ContentType.file)
-    expect(message.content[6]!.type).toBe(ContentType.text)
+    expect(message.content[0]!.type).toBe('text')
+    expect(message.content[1]!.type).toBe('text')
+    expect(message.content[2]!.type).toBe('text')
+    expect(message.content[3]!.type).toBe('image')
+    expect(message.content[4]!.type).toBe('text')
+    expect(message.content[5]!.type).toBe('file')
+    expect(message.content[6]!.type).toBe('text')
   })
 
   it('allows defining the default role', async () => {
     const prompt = 'Hello world!'
     const result = await render({
       prompt,
-      defaultRole: MessageRole.user,
+      defaultRole: 'user',
       adapter: Adapters.default,
     })
     const message = result.messages[0]!
-    expect(message.role).toBe(MessageRole.user)
+    expect(message.role).toBe('user')
   })
 })
 
@@ -128,7 +122,7 @@ describe('comments', async () => {
     const message = result.messages[0]!
 
     expect(message).toEqual({
-      role: MessageRole.system,
+      role: 'system',
       content: [
         {
           type: 'text',
@@ -502,23 +496,21 @@ Given a context, answer questions succintly yet complete.
     })
     expect(messages).toEqual([
       {
-        role: MessageRole.system,
+        role: 'system',
         content: [
           {
-            type: ContentType.text,
+            type: 'text',
             text: 'Given a context, answer questions succintly yet complete.',
           },
         ],
       },
       {
-        role: MessageRole.system,
-        content: [{ type: ContentType.text, text: 'context' }],
+        role: 'system',
+        content: [{ type: 'text', text: 'context' }],
       },
       {
-        role: MessageRole.user,
-        content: [
-          { type: ContentType.text, text: 'Please, help me with question!' },
-        ],
+        role: 'user',
+        content: [{ type: 'text', text: 'Please, help me with question!' }],
       },
     ])
   })
@@ -540,18 +532,16 @@ Given a context, answer questions succintly yet complete.
     })
     expect(messages).toEqual([
       {
-        role: MessageRole.system,
+        role: 'system',
         content: 'Given a context, answer questions succintly yet complete.',
       },
       {
-        role: MessageRole.system,
+        role: 'system',
         content: 'context',
       },
       {
-        role: MessageRole.user,
-        content: [
-          { type: ContentType.text, text: 'Please, help me with question!' },
-        ],
+        role: 'user',
+        content: [{ type: 'text', text: 'Please, help me with question!' }],
       },
     ])
   })
@@ -570,30 +560,30 @@ Given a context, answer questions succintly yet complete.
       })
       expect(messages).toEqual([
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Given a context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
         },
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'context',
               _promptlSourceMap: [],
             },
           ],
         },
         {
-          role: MessageRole.user,
+          role: 'user',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Please, help me with question!',
               _promptlSourceMap: [],
             },
@@ -619,20 +609,20 @@ Given a context, answer questions succintly yet complete.
       })
       expect(messages).toEqual([
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Given a context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
         },
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'context',
               _promptlSourceMap: [
                 {
@@ -645,10 +635,10 @@ Given a context, answer questions succintly yet complete.
           ],
         },
         {
-          role: MessageRole.user,
+          role: 'user',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Please, help me with question!',
               _promptlSourceMap: [
                 {
@@ -682,20 +672,20 @@ Given some context, answer questions succintly yet complete.
       })
       expect(messages).toEqual([
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Given some context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
         },
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'context_1 and context_2',
               _promptlSourceMap: [
                 {
@@ -713,10 +703,10 @@ Given some context, answer questions succintly yet complete.
           ],
         },
         {
-          role: MessageRole.user,
+          role: 'user',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Please, help me with question_1 and question_2!',
               _promptlSourceMap: [
                 {
@@ -753,20 +743,20 @@ Given a context, answer questions succintly yet complete.
       })
       expect(messages).toEqual([
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Given a context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
         },
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'context and context',
               _promptlSourceMap: [
                 {
@@ -784,10 +774,10 @@ Given a context, answer questions succintly yet complete.
           ],
         },
         {
-          role: MessageRole.user,
+          role: 'user',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Please, help me with question and question!',
               _promptlSourceMap: [
                 {
@@ -854,20 +844,20 @@ Given a context, answer questions succintly yet complete.
       })
       expect(messages).toEqual([
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Given a context, answer questions succintly yet complete.',
               _promptlSourceMap: [],
             },
           ],
         },
         {
-          role: MessageRole.system,
+          role: 'system',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'context',
               _promptlSourceMap: [
                 {
@@ -880,10 +870,10 @@ Given a context, answer questions succintly yet complete.
           ],
         },
         {
-          role: MessageRole.user,
+          role: 'user',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Please, help me\n  with question!',
               _promptlSourceMap: [
                 {
@@ -896,15 +886,15 @@ Given a context, answer questions succintly yet complete.
           ],
         },
         {
-          role: MessageRole.user,
+          role: 'user',
           content: [
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Is this the real life?',
               _promptlSourceMap: [],
             },
             {
-              type: ContentType.text,
+              type: 'text',
               text: 'Is this just fantasy?\n  lyrics',
               _promptlSourceMap: [
                 {
@@ -915,7 +905,7 @@ Given a context, answer questions succintly yet complete.
               ],
             },
             {
-              type: ContentType.image,
+              type: 'image',
               image: 'image',
               _promptlSourceMap: [
                 {
@@ -926,7 +916,7 @@ Given a context, answer questions succintly yet complete.
               ],
             },
             {
-              type: ContentType.file,
+              type: 'file',
               file: 'file',
               mimeType: 'text/plain',
               _promptlSourceMap: [
@@ -963,19 +953,19 @@ describe('promptL files', async () => {
 
     expect(messages).toEqual([
       {
-        role: MessageRole.system,
+        role: 'system',
         content: [
           {
-            type: ContentType.text,
+            type: 'text',
             text: 'Take a look at this file:',
           },
           {
-            type: ContentType.file,
+            type: 'file',
             file: 'https://example.com/file.txt',
             mimeType: 'text/plain',
           },
           {
-            type: ContentType.text,
+            type: 'text',
             text: '. What does it contain?',
           },
         ],
@@ -1001,14 +991,14 @@ describe('promptL files', async () => {
 
     expect(messages).toEqual([
       {
-        role: MessageRole.system,
+        role: 'system',
         content: [
           {
-            type: ContentType.text,
+            type: 'text',
             text: 'Look how pretty I am:',
           },
           {
-            type: ContentType.image,
+            type: 'image',
             image: 'https://example.com/selfie.png',
           },
         ],
@@ -1037,14 +1027,14 @@ describe('promptL files', async () => {
 
     expect(messages).toEqual([
       {
-        role: MessageRole.system,
+        role: 'system',
         content: [
           {
-            type: ContentType.text,
+            type: 'text',
             text: 'This is a file:',
           },
           {
-            type: ContentType.file,
+            type: 'file',
             file: 'https://example.com/file.txt',
             mimeType: 'text/plain',
           },
@@ -1082,23 +1072,23 @@ describe('promptL files', async () => {
 
     expect(messages).toEqual([
       {
-        role: MessageRole.system,
+        role: 'system',
         content: [
           {
-            type: ContentType.text,
+            type: 'text',
             text: 'Look at these files:',
           },
           {
-            type: ContentType.file,
+            type: 'file',
             file: 'https://example.com/file.txt',
             mimeType: 'text/plain',
           },
           {
-            type: ContentType.image,
+            type: 'image',
             image: 'https://example.com/selfie.png',
           },
           {
-            type: ContentType.file,
+            type: 'file',
             file: 'https://example.com/document.pdf',
             mimeType: 'application/pdf',
           },

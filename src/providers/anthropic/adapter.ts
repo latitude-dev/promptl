@@ -1,14 +1,13 @@
-import {
-  ContentType,
-  MessageRole,
+import type {
   Conversation as PromptlConversation,
-  ImageContent as PromptlImageContent,
   FileContent as PromptlFileContent,
+  ImageContent as PromptlImageContent,
   Message as PromptlMessage,
   MessageContent as PromptlMessageContent,
   SystemMessage as PromptlSystemMessage,
   TextContent as PromptlTextContent,
-  ToolCallContent as PromptlToolCallContent,
+  ToolResultContent as PromptlToolContent,
+  ToolRequestContent as PromptlToolRequestContent,
   ToolMessage as PromptlToolMessage,
   UserMessage as PromptlUserMessage,
 } from '$promptl/types'
@@ -44,7 +43,7 @@ export const AnthropicAdapter: ProviderAdapter<AnthropicMessage> = {
     const [systemMessagesOnTop, restMessages] =
       promptlConversation.messages.reduce(
         (acc: [PromptlMessage[], PromptlMessage[]], message) => {
-          if (message.role === MessageRole.system) {
+          if (message.role === 'system' || message.role === 'developer') {
             acc[0].push(message)
           } else {
             acc[1].push(message)
@@ -59,8 +58,8 @@ export const AnthropicAdapter: ProviderAdapter<AnthropicMessage> = {
         .map((m) => {
           const messageToAnthropic = promptlToAnthropic({
             ...m,
-            role: MessageRole.user,
-          })
+            role: 'user',
+          } as PromptlMessage)
           const content = messageToAnthropic.content
           if (typeof content === 'string') {
             return [
@@ -88,33 +87,33 @@ export const AnthropicAdapter: ProviderAdapter<AnthropicMessage> = {
     const { system: systemPrompt, ...restConfig } =
       anthropicConversation.config as {
         system:
-        | undefined
-        | string
-        | (
-          | AnthropicTextContent
-          | AnthropicImageContent
-          | AnthropicDocumentContent
-        )[]
+          | undefined
+          | string
+          | (
+              | AnthropicTextContent
+              | AnthropicImageContent
+              | AnthropicDocumentContent
+            )[]
         [key: string]: unknown
       }
 
     const systemMessages: PromptlSystemMessage[] = systemPrompt
       ? [
-        {
-          role: MessageRole.system,
-          content: Array.isArray(systemPrompt)
-            ? systemPrompt.map((c) => {
-              if (c.type === AnthropicContentType.image) {
-                return toPromptlImage(c)
-              }
-              if (c.type === AnthropicContentType.document) {
-                return toPromptlFile(c)
-              }
-              return c as unknown as PromptlMessageContent
-            })
-            : [{ type: ContentType.text, text: systemPrompt }],
-        },
-      ]
+          {
+            role: 'system',
+            content: Array.isArray(systemPrompt)
+              ? systemPrompt.map((c) => {
+                  if (c.type === AnthropicContentType.image) {
+                    return toPromptlImage(c)
+                  }
+                  if (c.type === AnthropicContentType.document) {
+                    return toPromptlFile(c)
+                  }
+                  return c as unknown as PromptlMessageContent
+                })
+              : [{ type: 'text', text: systemPrompt }],
+          },
+        ]
       : []
 
     return {
@@ -150,7 +149,7 @@ function toPromptlImage(
   const { source, ...rest } = imageContent
   return {
     ...rest,
-    type: ContentType.image,
+    type: 'image',
     image: source.data,
   }
 }
@@ -187,24 +186,57 @@ function toPromptlFile(
 
   return {
     ...rest,
-    type: ContentType.file,
+    type: 'file',
     file: source.data,
     mimeType: source.media_type,
   }
 }
 
+function toAnthropicToolResultContent(
+  result: unknown,
+): string | (AnthropicTextContent | AnthropicImageContent)[] | undefined {
+  if (typeof result === 'string') return result
+  if (Array.isArray(result)) {
+    const adapted: (AnthropicTextContent | AnthropicImageContent)[] = []
+    for (const item of result) {
+      if (!item || typeof item !== 'object' || !('type' in item)) continue
+      const type = (item as { type?: string }).type
+      if (type === 'image') {
+        adapted.push(toAnthropicImage(item as PromptlImageContent))
+        continue
+      }
+      if (type === 'text') {
+        adapted.push({
+          type: AnthropicContentType.text,
+          text: String((item as PromptlTextContent).text ?? ''),
+        })
+        continue
+      }
+      if (type === 'file') {
+        adapted.push({
+          type: AnthropicContentType.text,
+          text: String((item as PromptlFileContent).file ?? ''),
+        })
+      }
+    }
+    return adapted.length ? adapted : undefined
+  }
+  if (result === undefined || result === null) return undefined
+  return JSON.stringify(result)
+}
+
 function promptlToAnthropic(message: PromptlMessage): AnthropicMessage {
-  if (message.role === MessageRole.system) {
+  if (message.role === 'system' || message.role === 'developer') {
     throw new Error(
       'Anthropic only supports system messages at the top of the conversation',
     )
   }
 
-  if (message.role === MessageRole.user) {
+  if (message.role === 'user') {
     const { content, ...rest } = message
     const adaptedContent = content.map((c) => {
-      if (c.type === ContentType.image) return toAnthropicImage(c)
-      if (c.type === ContentType.file) return toAnthropicFile(c)
+      if (c.type === 'image') return toAnthropicImage(c)
+      if (c.type === 'file') return toAnthropicFile(c)
       return c
     })
 
@@ -214,18 +246,18 @@ function promptlToAnthropic(message: PromptlMessage): AnthropicMessage {
     } as AnthropicUserMessage
   }
 
-  if (message.role === MessageRole.assistant) {
+  if (message.role === 'assistant') {
     const { content, ...rest } = message
 
     const adaptedContent = content.map((c) => {
-      if (c.type === ContentType.image) return toAnthropicImage(c)
-      if (c.type === ContentType.file) return toAnthropicFile(c)
-      if (c.type === ContentType.toolCall) {
+      if (c.type === 'image') return toAnthropicImage(c)
+      if (c.type === 'file') return toAnthropicFile(c)
+      if (c.type === 'tool-call') {
         return {
           type: AnthropicContentType.tool_use,
           id: c.toolCallId,
           name: c.toolName,
-          input: c.toolArguments,
+          input: c.args,
         }
       }
       return c
@@ -237,113 +269,114 @@ function promptlToAnthropic(message: PromptlMessage): AnthropicMessage {
     } as AnthropicAssistantMessage
   }
 
-  if (message.role === MessageRole.tool) {
-    const { toolId, content, ...rest } = message
-    const adaptedContent = content.map((c) => {
-      if (c.type === ContentType.image) return toAnthropicImage(c)
-      if (c.type === ContentType.file) return toAnthropicFile(c)
-      return c
-    })
+  if (message.role === 'tool') {
+    const toolResult = message.content.find((c) => c.type === 'tool-result') as
+      | PromptlToolContent
+      | undefined
+    if (!toolResult) {
+      throw new Error('Tool messages must include tool-result content')
+    }
+    const content = toAnthropicToolResultContent(toolResult.result)
     return {
-      ...rest,
-      role: MessageRole.user,
+      role: 'user',
       content: [
         {
           type: AnthropicContentType.tool_result,
-          tool_use_id: toolId,
-          ...(content.length ? { content: adaptedContent } : {}),
+          tool_use_id: toolResult.toolCallId,
+          ...(content !== undefined ? { content } : {}),
+          ...(toolResult.isError ? { is_error: true } : {}),
         },
       ],
     } as AnthropicUserMessage
   }
 
-  throw new Error(`Unsupported message role: ${message.role}`)
+  const role = (message as { role?: string }).role
+  throw new Error(`Unsupported message role: ${role}`)
 }
 
 const anthropicToPromptl =
   (toolRequestsNamesById: Map<string, string>) =>
-    (message: AnthropicMessage): PromptlMessage[] => {
-      const messageContent: AnthropicMessageContent[] =
-        typeof message.content === 'string'
-          ? [{ type: AnthropicContentType.text, text: message.content }]
-          : message.content
+  (message: AnthropicMessage): PromptlMessage[] => {
+    const messageContent: AnthropicMessageContent[] =
+      typeof message.content === 'string'
+        ? [{ type: AnthropicContentType.text, text: message.content }]
+        : message.content
 
-      if (message.role === MessageRole.assistant) {
-        return [
-          {
-            ...message,
-            content: messageContent.map((c) => {
-              if (c.type === AnthropicContentType.image) return toPromptlImage(c)
-              if (c.type === AnthropicContentType.document)
-                return toPromptlFile(c)
-              if (c.type === AnthropicContentType.tool_use) {
-                toolRequestsNamesById.set(c.id, c.name)
-                return {
-                  type: ContentType.toolCall,
-                  toolCallId: c.id,
-                  toolName: c.name,
-                  toolArguments: c.input,
-                } as PromptlToolCallContent
-              }
-              return c as unknown as PromptlMessageContent
-            }),
-          },
-        ]
-      }
-
-      if (message.role === MessageRole.user) {
-        const { userMessage, toolMessages } = messageContent.reduce(
-          (
-            acc: {
-              userMessage: PromptlUserMessage
-              toolMessages: PromptlToolMessage[]
-            },
-            c,
-          ) => {
-            if (c.type === AnthropicContentType.tool_result) {
-              const toolResponseContent = c.content
-                ? Array.isArray(c.content)
-                  ? c.content.map((cc) => {
-                    if (cc.type === AnthropicContentType.image)
-                      return toPromptlImage(cc)
-                    return cc as unknown as PromptlMessageContent
-                  })
-                  : [
-                    {
-                      type: ContentType.text,
-                      text: c.content!,
-                    } as PromptlTextContent,
-                  ]
-                : []
-
-              acc.toolMessages.push({
-                ...message,
-                role: MessageRole.tool,
-                toolId: c.tool_use_id,
-                toolName: toolRequestsNamesById.get(c.tool_use_id) ?? '',
-                content: toolResponseContent,
-              })
-            } else if (c.type === AnthropicContentType.image) {
-              acc.userMessage.content.push(toPromptlImage(c))
-            } else if (c.type === AnthropicContentType.document) {
-              acc.userMessage.content.push(toPromptlFile(c))
-            } else {
-              acc.userMessage.content.push(c as unknown as PromptlMessageContent)
+    if (message.role === 'assistant') {
+      return [
+        {
+          ...message,
+          role: 'assistant',
+          content: messageContent.map((c) => {
+            if (c.type === AnthropicContentType.image) return toPromptlImage(c)
+            if (c.type === AnthropicContentType.document)
+              return toPromptlFile(c)
+            if (c.type === AnthropicContentType.tool_use) {
+              toolRequestsNamesById.set(c.id, c.name)
+              return {
+                type: 'tool-call',
+                toolCallId: c.id,
+                toolName: c.name,
+                args: c.input,
+              } as PromptlToolRequestContent
             }
-            return acc
-          },
-          {
-            userMessage: { ...message, role: MessageRole.user, content: [] },
-            toolMessages: [],
-          },
-        )
+            return c as unknown as PromptlMessageContent
+          }),
+        },
+      ]
+    }
 
-        return [
-          ...toolMessages,
-          ...(userMessage.content.length ? [userMessage] : []),
-        ]
+    if (message.role === 'user') {
+      const userContent: PromptlMessageContent[] = []
+      const toolMessages: PromptlToolMessage[] = []
+
+      for (const c of messageContent) {
+        if (c.type === AnthropicContentType.tool_result) {
+          const result = Array.isArray(c.content)
+            ? c.content.map((cc) => {
+                if (cc.type === AnthropicContentType.image)
+                  return toPromptlImage(cc)
+                return cc as unknown as PromptlMessageContent
+              })
+            : c.content
+
+          toolMessages.push({
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId: c.tool_use_id,
+                toolName: toolRequestsNamesById.get(c.tool_use_id) ?? '',
+                result: result ?? '',
+                isError: c.is_error,
+              },
+            ],
+          })
+          continue
+        }
+
+        if (c.type === AnthropicContentType.image) {
+          userContent.push(toPromptlImage(c))
+          continue
+        }
+
+        if (c.type === AnthropicContentType.document) {
+          userContent.push(toPromptlFile(c))
+          continue
+        }
+
+        userContent.push(c as unknown as PromptlMessageContent)
       }
 
-      //@ts-expect-error — There are no more supported roles. Typescript knows it and is yelling me back
-      throw new Error(`Unsupported message role: ${message.role}`)
+      const userMessage: PromptlUserMessage = {
+        ...message,
+        role: 'user',
+        content: userContent,
+      }
+
+      return [...toolMessages, ...(userContent.length ? [userMessage] : [])]
+    }
+
+    const role = (message as { role?: string }).role
+    throw new Error(`Unsupported message role: ${role}`)
   }

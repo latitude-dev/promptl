@@ -4,8 +4,6 @@
  * Source: https://platform.openai.com/docs/api-reference/chat/create#chat-create-messages
  */
 
-import { MessageRole } from '$promptl/types'
-
 export enum ContentType {
   text = 'text',
   image = 'image',
@@ -45,24 +43,30 @@ export type ToolCall = {
 }
 
 interface IMessage {
-  role: MessageRole
+  role: 'assistant' | 'developer' | 'system' | 'tool' | 'user'
   content: MessageContent[]
 }
 
 export type SystemMessage = IMessage & {
-  role: MessageRole.system
+  role: 'system'
+  name?: string
+  content: string | TextContent[]
+}
+
+export type DeveloperMessage = IMessage & {
+  role: 'developer'
   name?: string
   content: string | TextContent[]
 }
 
 export type UserMessage = IMessage & {
-  role: MessageRole.user
+  role: 'user'
   name?: string
   content: string | MessageContent[]
 }
 
 export type AssistantMessage = IMessage & {
-  role: MessageRole.assistant
+  role: 'assistant'
   content: string
   refusal?: string
   name?: string
@@ -71,13 +75,14 @@ export type AssistantMessage = IMessage & {
 }
 
 export type ToolMessage = IMessage & {
-  role: MessageRole.tool
+  role: 'tool'
   tool_call_id: string
   content: string | MessageContent[]
 }
 
 export type Message =
   | SystemMessage
+  | DeveloperMessage
   | UserMessage
   | AssistantMessage
   | ToolMessage

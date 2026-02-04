@@ -7,7 +7,7 @@ import {
   ImageContent,
   SystemMessage,
   TextContent,
-  ToolCallContent,
+  ToolRequestContent,
   UserMessage,
 } from '$promptl/types'
 import { describe, expect, it } from 'vitest'
@@ -108,7 +108,10 @@ describe('content tags', async () => {
         <content type="text"> Text </content>
       </content>
     `)
-    const error = await getExpectedError(() => render({ prompt, adapter: Adapters.default }), CompileError)
+    const error = await getExpectedError(
+      () => render({ prompt, adapter: Adapters.default }),
+      CompileError,
+    )
     expect(error.code).toBe('content-tag-inside-content')
   })
 
@@ -117,7 +120,10 @@ describe('content tags', async () => {
       <content-file> File </content-file>
     `)
 
-    const error = await getExpectedError(() => render({ prompt, adapter: Adapters.default }), CompileError)
+    const error = await getExpectedError(
+      () => render({ prompt, adapter: Adapters.default }),
+      CompileError,
+    )
     expect(error.code).toBe('file-tag-without-mime-type')
   })
 })
@@ -136,7 +142,7 @@ describe('tool-call tags', async () => {
     expect(message.role).toBe('assistant')
     expect(message.content.length).toBe(1)
     expect(message.content[0]!.type).toBe('tool-call')
-    const toolCall = message.content[0]! as ToolCallContent
+    const toolCall = message.content[0]! as ToolRequestContent
     expect(toolCall.toolName).toBe('get_weather')
     expect(toolCall.toolCallId).toBe('123')
   })
@@ -148,7 +154,10 @@ describe('tool-call tags', async () => {
       </user>
     `)
 
-    const error = await getExpectedError(() => render({ prompt, adapter: Adapters.default }), CompileError)
+    const error = await getExpectedError(
+      () => render({ prompt, adapter: Adapters.default }),
+      CompileError,
+    )
     expect(error.code).toBe('invalid-tool-call-placement')
   })
 
@@ -161,7 +170,10 @@ describe('tool-call tags', async () => {
       </assistant>
     `)
 
-    const error = await getExpectedError(() => render({ prompt, adapter: Adapters.default }), CompileError)
+    const error = await getExpectedError(
+      () => render({ prompt, adapter: Adapters.default }),
+      CompileError,
+    )
     expect(error.code).toBe('content-tag-inside-content')
   })
 })

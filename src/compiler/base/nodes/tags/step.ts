@@ -1,7 +1,7 @@
 import { tagAttributeIsLiteral } from '$promptl/compiler/utils'
 import errors from '$promptl/error/errors'
 import { ChainStepTag } from '$promptl/parser/interfaces'
-import { Config, ContentType } from '$promptl/types'
+import type { Config } from '$promptl/types'
 
 import { CompileNodeContext } from '../../types'
 
@@ -71,10 +71,13 @@ export async function compile(
       baseNodeError(errors.invalidStaticAttribute('as'), node)
     }
 
-    const textResponse = (stepResponse?.content ?? []).filter(c => c.type === ContentType.text).map(c => c.text).join('')
+    const textResponse = (stepResponse?.content ?? [])
+      .filter((c) => c.type === 'text')
+      .map((c) => c.text)
+      .join('')
     let responseVarValue = textResponse
 
-    if ("schema" in config) {
+    if ('schema' in config) {
       try {
         responseVarValue = JSON.parse(responseVarValue.trim())
       } catch (error) {

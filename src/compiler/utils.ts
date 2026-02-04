@@ -8,7 +8,8 @@ import {
   ReferenceTag,
   ScopeTag,
 } from '$promptl/parser/interfaces'
-import { ContentTypeTagName, MessageRole } from '$promptl/types'
+import { ContentTypeTagName } from '$promptl/types'
+import type { MessageRole } from '$promptl/types'
 import { Scalar, Node as YAMLItem, YAMLMap, YAMLSeq } from 'yaml'
 
 type ZodIssue = core.$ZodIssue
@@ -46,7 +47,9 @@ export function removeCommonIndent(text: string): string {
 
 export function isMessageTag(tag: ElementTag): tag is MessageTag {
   if (tag.name === TAG_NAMES.message) return true
-  return Object.values(MessageRole).includes(tag.name as MessageRole)
+  return ['assistant', 'developer', 'system', 'tool', 'user'].includes(
+    tag.name as MessageRole,
+  )
 }
 
 export function isContentTag(tag: ElementTag): tag is ContentTag {

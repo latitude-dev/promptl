@@ -1,7 +1,6 @@
-import {
+import type {
   AssistantMessage,
   Config,
-  ContentType,
   Conversation,
   Message,
   MessageContent,
@@ -55,7 +54,7 @@ export async function complete({
     const response = callback
       ? await callback({ messages, config })
       : 'RESPONSE'
-    responseMessage = { content: [{ type: ContentType.text, text: response }] }
+    responseMessage = { content: [{ type: 'text', text: response }] }
     steps++
 
     if (steps > maxSteps) throw new Error('too many chain steps')

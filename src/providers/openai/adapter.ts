@@ -1,12 +1,11 @@
-import {
-  ContentType,
-  MessageContent,
-  MessageRole,
+import type {
   Conversation as PromptlConversation,
-  Message as PromptlMessage,
-  TextContent,
-  ToolCallContent,
   FileContent,
+  Message as PromptlMessage,
+  MessageContent,
+  TextContent,
+  ToolResultContent,
+  ToolRequestContent,
 } from '$promptl/types'
 
 import { ProviderAdapter, type ProviderConversation } from '../adapter'
@@ -14,7 +13,6 @@ import {
   AssistantMessage as OpenAIAssistantMessage,
   UserMessage as OpenAIUserMessage,
   Message as OpenAIMessage,
-  SystemMessage as OpenAISystemMessage,
   TextContent as OpenAITextContent,
   ToolCall as OpenAIToolCall,
   ToolMessage as OpenAIToolMessage,
@@ -73,16 +71,28 @@ function toPromptlFile(fileContent: OpenAIAudioContent): FileContent {
 
   return {
     ...rest,
-    type: ContentType.file,
+    type: 'file',
     file: data,
     mimeType: `audio/${format}`,
   }
 }
 
+function formatToolResultOutput(result: unknown): string {
+  if (typeof result === 'string') return result
+  if (Array.isArray(result)) {
+    const textParts = result
+      .filter((item) => item && typeof item === 'object' && 'type' in item)
+      .filter((item) => (item as { type?: string }).type === 'text')
+      .map((item) => String((item as { text?: unknown }).text ?? ''))
+    if (textParts.length) return textParts.join('')
+  }
+  return JSON.stringify(result)
+}
+
 function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
-  if (message.role === MessageRole.system) {
+  if (message.role === 'system' || message.role === 'developer') {
     const { content, ...rest } = message
-    if (content.some((c) => c.type !== ContentType.text)) {
+    if (content.some((c) => c.type !== 'text')) {
       throw new Error(
         `Unsupported content type for system message: ${content.map((c) => c.type).join(', ')}`,
       )
@@ -91,31 +101,49 @@ function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
     if (textContent.length === 1) {
       return {
         ...rest,
+        role: message.role,
         content: (content[0] as TextContent).text,
-      } as OpenAISystemMessage
+      } as OpenAIMessage
     }
 
-    return { ...rest, content: textContent as unknown as OpenAITextContent[] }
+    return {
+      ...rest,
+      role: message.role,
+      content: textContent as unknown as OpenAITextContent[],
+    } as OpenAIMessage
   }
 
-  if (message.role === MessageRole.user) {
+  if (message.role === 'user') {
     const { content, ...rest } = message
 
-    if (content.some((c) => !Object.values(ContentType).includes(c.type))) {
+    if (
+      content.some(
+        (c) =>
+          ![
+            'file',
+            'image',
+            'reasoning',
+            'redacted-reasoning',
+            'text',
+            'tool-call',
+            'tool-result',
+          ].includes(c.type),
+      )
+    ) {
       throw new Error(
         `Unsupported content type for user message: ${content.map((c) => c.type).join(', ')}`,
       )
     }
 
     const adaptedContent = content.map((c) => {
-      if (c.type === ContentType.file) return toOpenAiFile(c)
+      if (c.type === 'file') return toOpenAiFile(c)
       return c
     })
 
     return { ...rest, content: adaptedContent } as OpenAIUserMessage
   }
 
-  if (message.role === MessageRole.assistant) {
+  if (message.role === 'assistant') {
     const { content, ...rest } = message
 
     const { toolCalls, textContent } = content.reduce(
@@ -123,18 +151,18 @@ function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
         acc: { toolCalls: OpenAIToolCall[]; textContent: OpenAITextContent[] },
         c,
       ) => {
-        if (c.type === ContentType.text) {
+        if (c.type === 'text') {
           acc.textContent.push(c as unknown as OpenAITextContent)
           return acc
         }
 
-        if (c.type === ContentType.toolCall) {
+        if (c.type === 'tool-call') {
           acc.toolCalls.push({
             id: c.toolCallId,
             type: 'function',
             function: {
               name: c.toolName,
-              arguments: JSON.stringify(c.toolArguments),
+              arguments: JSON.stringify(c.args),
             },
           })
           return acc
@@ -154,15 +182,23 @@ function promptlToOpenAi(message: PromptlMessage): OpenAIMessage {
     } as OpenAIAssistantMessage
   }
 
-  if (message.role === MessageRole.tool) {
-    const { toolId, ...rest } = message
+  if (message.role === 'tool') {
+    const toolResult = message.content.find((c) => c.type === 'tool-result') as
+      | ToolResultContent
+      | undefined
+    if (!toolResult) {
+      throw new Error('Tool messages must include tool-result content')
+    }
+    const output = formatToolResultOutput(toolResult.result)
     return {
-      ...rest,
-      tool_call_id: toolId,
+      ...message,
+      tool_call_id: toolResult.toolCallId,
+      content: output,
     } as unknown as OpenAIToolMessage
   }
 
-  throw new Error(`Unsupported message role: ${message.role}`)
+  const role = (message as { role?: string }).role
+  throw new Error(`Unsupported message role: ${role}`)
 }
 
 const openAiToPromptl =
@@ -171,7 +207,7 @@ const openAiToPromptl =
     const content: MessageContent[] = []
 
     if (typeof message.content === 'string') {
-      content.push({ type: ContentType.text, text: message.content })
+      content.push({ type: 'text', text: message.content })
     } else if (Array.isArray(message.content)) {
       content.push(
         ...message.content.map((c) => {
@@ -181,33 +217,42 @@ const openAiToPromptl =
       )
     }
 
-    if (message.role === MessageRole.assistant) {
+    if (message.role === 'assistant') {
       const toolCalls: OpenAIToolCall[] = message.tool_calls || []
       content.push(
         ...toolCalls.map((tc) => {
           toolRequestsNamesById.set(tc.id, tc.function.name)
           return {
-            type: ContentType.toolCall,
+            type: 'tool-call',
             toolCallId: tc.id,
             toolName: tc.function.name,
-            toolArguments: JSON.parse(tc.function.arguments),
-          } as ToolCallContent
+            args: JSON.parse(tc.function.arguments),
+          } as ToolRequestContent
         }),
       )
     }
 
-    if (message.role === MessageRole.tool) {
+    if (message.role === 'tool') {
       const { tool_call_id, content: _, ...rest } = message
+      const toolName = toolRequestsNamesById.get(tool_call_id) ?? ''
       return {
-        toolId: tool_call_id,
-        toolName: toolRequestsNamesById.get(tool_call_id) ?? '',
-        content,
         ...rest,
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId: tool_call_id,
+            toolName,
+            result:
+              typeof message.content === 'string' ? message.content : content,
+          },
+        ],
       }
     }
 
     return {
       ...message,
+      role: message.role === 'developer' ? 'developer' : message.role,
       content,
     }
   }

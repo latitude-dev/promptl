@@ -12,12 +12,15 @@ function matchesReservedTag(template: string, index: number): boolean {
   let tagStart = index + (isClosingTag ? 2 : 1)
 
   for (const tag of RESERVED_TAGS) {
+    const tagName = String(tag)
     if (
-      template.startsWith(tag, tagStart) &&
-      (WHITESPACE_CHARS.includes(template[tagStart + tag.length] as string) ||
-        template[tagStart + tag.length] === '/' ||
-        template[tagStart + tag.length] === '>' ||
-        tagStart + tag.length === template.length)
+      template.startsWith(tagName, tagStart) &&
+      (WHITESPACE_CHARS.includes(
+        template[tagStart + tagName.length] as string,
+      ) ||
+        template[tagStart + tagName.length] === '/' ||
+        template[tagStart + tagName.length] === '>' ||
+        tagStart + tagName.length === template.length)
     ) {
       return true
     }

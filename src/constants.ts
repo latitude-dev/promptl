@@ -1,14 +1,15 @@
-import { ContentTypeTagName, MessageRole } from './types'
+import { ContentTypeTagName } from './types'
 
 export const CUSTOM_TAG_START = '{{'
 export const CUSTOM_TAG_END = '}}'
 
 export enum TAG_NAMES {
   message = 'message',
-  system = MessageRole.system,
-  user = MessageRole.user,
-  assistant = MessageRole.assistant,
-  tool = MessageRole.tool,
+  system = 'system',
+  developer = 'developer',
+  user = 'user',
+  assistant = 'assistant',
+  tool = 'tool',
   content = 'content',
   text = ContentTypeTagName.text,
   image = ContentTypeTagName.image,

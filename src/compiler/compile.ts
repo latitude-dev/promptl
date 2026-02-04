@@ -5,10 +5,9 @@ import type {
   Fragment,
   TemplateNode,
 } from '$promptl/parser/interfaces'
-import {
+import type {
   AssistantMessage,
   Config,
-  ContentType,
   Message,
   MessageContent,
   MessageRole,
@@ -86,7 +85,7 @@ export class Compile {
     stepResponse,
     referenceFn,
     fullPath,
-    defaultRole = MessageRole.system,
+    defaultRole = 'system',
     includeSourceMap = false,
   }: {
     rawText: string
@@ -242,7 +241,7 @@ export class Compile {
 
     this.addContent({
       content: {
-        type: ContentType.text,
+        type: 'text',
         text: stray.text,
         _promptlSourceMap: stray.sourceMap,
       },
@@ -281,7 +280,7 @@ export class Compile {
     if (this.stepResponse === undefined) return undefined
 
     const response: AssistantMessage = {
-      role: MessageRole.assistant,
+      role: 'assistant',
       content: this.stepResponse,
     }
 

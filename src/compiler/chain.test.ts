@@ -1,7 +1,7 @@
 import { TAG_NAMES } from '$promptl/constants'
 import CompileError from '$promptl/error/error'
 import { getExpectedError } from '$promptl/test/helpers'
-import { MessageRole, TextContent } from '$promptl/types'
+import { TextContent } from '$promptl/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { Chain } from './chain'
@@ -41,12 +41,12 @@ describe('chain', async () => {
     const { steps, messages } = await complete({ chain })
     expect(steps).toBe(1)
     expect(messages.length).toBe(6) // This conversation includes the assistant response
-    expect(messages[0]!.role).toBe(MessageRole.system)
-    expect(messages[1]!.role).toBe(MessageRole.user)
-    expect(messages[2]!.role).toBe(MessageRole.user)
-    expect(messages[3]!.role).toBe(MessageRole.user)
-    expect(messages[4]!.role).toBe(MessageRole.assistant) // manually set
-    expect(messages[5]!.role).toBe(MessageRole.assistant)
+    expect(messages[0]!.role).toBe('system')
+    expect(messages[1]!.role).toBe('user')
+    expect(messages[2]!.role).toBe('user')
+    expect(messages[3]!.role).toBe('user')
+    expect(messages[4]!.role).toBe('assistant') // manually set
+    expect(messages[5]!.role).toBe('assistant')
   })
 
   it('fails when nesting steps', async () => {
@@ -173,7 +173,7 @@ describe('chain', async () => {
     const chain = new Chain({ prompt, adapter: Adapters.default })
     const { steps, messages } = await complete({ chain })
     expect(steps).toBe(3)
-    const stepMessages = messages.filter((m) => m.role === MessageRole.system)
+    const stepMessages = messages.filter((m) => m.role === 'system')
     expect(stepMessages.length).toBe(3)
     expect((stepMessages[0]!.content[0] as TextContent).text).toBe('Step 1')
     expect((stepMessages[1]!.content[0] as TextContent).text).toBe('Step 3')
@@ -270,7 +270,7 @@ describe('chain', async () => {
     const { messages } = await complete({ chain })
 
     expect(messages[0]!).toEqual({
-      role: MessageRole.system,
+      role: 'system',
       content: [
         {
           type: 'text',
@@ -279,7 +279,7 @@ describe('chain', async () => {
       ],
     })
     expect(messages[1]).toEqual({
-      role: MessageRole.assistant,
+      role: 'assistant',
       content: [
         {
           type: 'text',
@@ -288,7 +288,7 @@ describe('chain', async () => {
       ],
     })
     expect(messages[2]).toEqual({
-      role: MessageRole.system,
+      role: 'system',
       content: [
         {
           type: 'text',
@@ -319,7 +319,7 @@ describe('chain', async () => {
     const { messages } = await complete({ chain })
 
     expect(messages[messages.length - 2]).toEqual({
-      role: MessageRole.system,
+      role: 'system',
       content: [
         {
           type: 'text',
@@ -350,7 +350,7 @@ describe('chain', async () => {
     const { messages } = await complete({ chain: correctChain })
 
     expect(messages[messages.length - 2]!).toEqual({
-      role: MessageRole.system,
+      role: 'system',
       content: [
         {
           type: 'text',
@@ -386,7 +386,7 @@ describe('chain', async () => {
     expect((messages[2]!.content[0]! as TextContent).text).toBe('1')
     expect((messages[4]!.content[0]! as TextContent).text).toBe('2')
     expect(messages[6]).toEqual({
-      role: MessageRole.system,
+      role: 'system',
       content: [
         {
           type: 'text',
@@ -419,7 +419,7 @@ describe('chain', async () => {
     const chain = new Chain({ prompt, adapter: Adapters.default })
 
     const { messages } = await complete({ chain })
-    const userMessages = messages.filter((m) => m.role === MessageRole.user)
+    const userMessages = messages.filter((m) => m.role === 'user')
     const userMessageText = userMessages
       .map((m) => m.content.map((c) => (c as TextContent).text).join(' '))
       .join('\n')
@@ -438,7 +438,7 @@ describe('chain', async () => {
     )
 
     expect(messages[messages.length - 2]).toEqual({
-      role: MessageRole.system,
+      role: 'system',
       content: [
         {
           type: 'text',

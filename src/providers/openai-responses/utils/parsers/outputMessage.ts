@@ -5,12 +5,9 @@ import {
   ResponseOutputRefusal,
 } from '$promptl/providers/openai-responses/types'
 import {
-  ContentType,
   Message as PromptlMessage,
-  MessageRole,
   TextContent,
-  AssistantMessage,
-  ToolCallContent,
+  ToolRequestContent,
 } from '$promptl/types'
 
 export function isOutputMessage(
@@ -77,34 +74,34 @@ export function parseOutputMessage({
   if (builtinTool) {
     return {
       id: message.id,
-      role: MessageRole.assistant,
+      role: 'assistant',
       status: message.status,
       content: message.content
         .map((content) => {
           if (!isOutputTextContent(content)) return null
 
           return {
-            type: ContentType.toolCall,
+            type: 'tool-call',
             toolCallId: builtinTool.toolId,
             toolName: builtinTool.toolName,
-            toolArguments: {
+            args: {
               text: content.text,
               annotations: content.annotations,
             },
-          } satisfies ToolCallContent
+          } satisfies ToolRequestContent
         })
         .filter((c) => c !== null),
-    } satisfies AssistantMessage
+    } as PromptlMessage
   }
 
   return {
     id: message.id,
-    role: MessageRole.assistant,
+    role: 'assistant',
     status: message.status,
     content: message.content.map((content) => {
       if (isOutputTextContent(content)) {
         return {
-          type: ContentType.text,
+          type: 'text',
           annotations: content.annotations,
           text: content.text,
         } satisfies TextContent
@@ -112,7 +109,7 @@ export function parseOutputMessage({
 
       if (isOutputRefusalContent(content)) {
         return {
-          type: ContentType.text,
+          type: 'text',
           text: content.refusal,
         } satisfies TextContent
       }
@@ -123,5 +120,5 @@ export function parseOutputMessage({
         `Unknown type ${type} in OpenAIResponse message output content`,
       )
     }),
-  } satisfies PromptlMessage
+  } as PromptlMessage
 }

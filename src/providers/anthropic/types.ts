@@ -4,11 +4,9 @@
  * Source: https://docs.anthropic.com/en/api/messages
  */
 
-import { MessageRole as PromptlMessageRole } from '$promptl/types'
-
 export enum MessageRole {
-  user = PromptlMessageRole.user,
-  assistant = PromptlMessageRole.assistant,
+  user = 'user',
+  assistant = 'assistant',
 }
 
 export enum ContentType {

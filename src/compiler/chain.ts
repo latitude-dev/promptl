@@ -11,13 +11,7 @@ import {
   ProviderAdapter,
 } from '$promptl/providers'
 import { ProviderConversation } from '$promptl/providers/adapter'
-import {
-  Config,
-  ContentType,
-  Message,
-  MessageContent,
-  MessageRole,
-} from '$promptl/types'
+import type { Config, Message, MessageContent } from '$promptl/types'
 
 import { Compile } from './compile'
 import Scope from './scope'
@@ -183,9 +177,9 @@ export class Chain<M extends AdapterMessageType = Message> {
   private buildStepResponseContent(
     response?: StepResponse<M> | M[],
   ): BuildStepResponseContent {
-    if (response == undefined) return { contents: undefined }
+    if (response === undefined) return { contents: undefined }
     if (typeof response === 'string') {
-      return { contents: [{ text: response, type: ContentType.text }] }
+      return { contents: [{ text: response, type: 'text' }] }
     }
 
     if (Array.isArray(response)) {
@@ -193,13 +187,15 @@ export class Chain<M extends AdapterMessageType = Message> {
         config: this.globalConfig ?? {},
         messages: response as M[],
       })
-      const contents = converted.messages.flatMap((m) => m.content)
+      const contents = converted.messages.flatMap(
+        (m) => m.content as MessageContent[],
+      )
       return { messages: converted.messages as Message[], contents }
     }
 
     const responseMessage = {
       ...response,
-      role: 'role' in response ? response.role : MessageRole.assistant,
+      role: 'role' in response ? response.role : 'assistant',
     } as M
 
     const convertedMessages = this.adapter.toPromptl({
@@ -207,7 +203,9 @@ export class Chain<M extends AdapterMessageType = Message> {
       messages: [responseMessage],
     })
 
-    return { contents: convertedMessages.messages[0]!.content }
+    return {
+      contents: convertedMessages.messages[0]!.content as MessageContent[],
+    }
   }
 
   private buildGlobalMessages(
@@ -222,7 +220,7 @@ export class Chain<M extends AdapterMessageType = Message> {
 
     return [
       {
-        role: MessageRole.assistant,
+        role: 'assistant',
         content: contents ?? [],
       },
     ]

@@ -1,12 +1,8 @@
 import { CUSTOM_MESSAGE_ROLE_ATTR, TAG_NAMES } from '$promptl/constants'
 import errors from '$promptl/error/errors'
 import { MessageTag, TemplateNode } from '$promptl/parser/interfaces'
-import {
-  ContentType,
-  Message,
-  MessageContent,
-  MessageRole,
-} from '$promptl/types'
+import { Message, MessageContent } from '$promptl/types'
+import type { MessageRole, ToolResultContent } from '$promptl/types'
 
 import { CompileNodeContext } from '../../types'
 
@@ -76,13 +72,13 @@ function buildMessage<R extends MessageRole>(
   { node, baseNodeError }: CompileNodeContext<MessageTag>,
   { role, attributes, content }: BuildProps<R>,
 ): Message | undefined {
-  if (!Object.values(MessageRole).includes(role)) {
+  if (!['assistant', 'developer', 'system', 'tool', 'user'].includes(role)) {
     baseNodeError(errors.invalidMessageRole(role), node)
   }
 
-  if (role !== MessageRole.assistant) {
+  if (role !== 'assistant') {
     content.forEach((item) => {
-      if (item.content.type === ContentType.toolCall) {
+      if (item.content.type === 'tool-call') {
         baseNodeError(errors.invalidToolCallPlacement, item.node ?? node)
       }
     })
@@ -94,11 +90,7 @@ function buildMessage<R extends MessageRole>(
     content: content.map((item) => item.content),
   } as Message
 
-  if (role === MessageRole.user) {
-    message.name = attributes.name ? String(attributes.name) : undefined
-  }
-
-  if (role === MessageRole.tool) {
+  if (role === 'tool') {
     if (attributes.id === undefined) {
       baseNodeError(errors.toolMessageWithoutId, node)
     }
@@ -107,10 +99,15 @@ function buildMessage<R extends MessageRole>(
       baseNodeError(errors.toolMessageWithoutName, node)
     }
 
-    message.toolId = String(attributes.id)
-    message.toolName = String(attributes.name)
-    delete message['id']
-    delete message['name']
+    const toolResult: ToolResultContent = {
+      type: 'tool-result',
+      toolCallId: String(attributes.id),
+      toolName: String(attributes.name),
+      result: message.content,
+    }
+    message.content = [toolResult]
+    delete (message as Record<string, unknown>)['id']
+    delete (message as Record<string, unknown>)['name']
   }
 
   return message

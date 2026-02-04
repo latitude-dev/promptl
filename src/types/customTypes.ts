@@ -1,4 +1,4 @@
-import { ContentType, FileContent, ImageContent } from './message'
+import type { FileContent, ImageContent } from './message'
 
 /**
  * Custom file type for PromptL.
@@ -65,13 +65,13 @@ export function promptLFileToMessageContent(
 ): FileContent | ImageContent {
   if (file.isImage) {
     return {
-      type: ContentType.image,
+      type: 'image',
       image: file.url,
     }
   }
 
   return {
-    type: ContentType.file,
+    type: 'file',
     mimeType: file.mimeType,
     file: file.url,
   }

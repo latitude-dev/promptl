@@ -1,4 +1,4 @@
-import { AssistantMessage, MessageRole, UserMessage } from '$promptl/types'
+import { AssistantMessage, UserMessage } from '$promptl/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { render } from '../..'
@@ -100,7 +100,7 @@ describe('conditional expressions', async () => {
 
     expect(result1.messages).toEqual([
       {
-        role: MessageRole.user,
+        role: 'user',
         name: undefined,
         content: [
           {
@@ -112,7 +112,7 @@ describe('conditional expressions', async () => {
     ])
     expect(result2.messages).toEqual([
       {
-        role: MessageRole.user,
+        role: 'user',
         name: undefined,
         content: [
           {

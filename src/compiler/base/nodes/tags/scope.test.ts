@@ -1,7 +1,7 @@
 import { Adapters, Chain, render } from '$promptl/index'
 import { complete } from '$promptl/compiler/test/helpers'
 import { removeCommonIndent } from '$promptl/compiler/utils'
-import { MessageRole, SystemMessage, UserMessage } from '$promptl/types'
+import { SystemMessage, UserMessage } from '$promptl/types'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('scope tags', async () => {
@@ -17,7 +17,7 @@ describe('scope tags', async () => {
     const result = await render({ prompt, adapter: Adapters.default })
 
     expect(result.messages.length).toBe(1)
-    expect(result.messages[0]!.role).toBe(MessageRole.user)
+    expect(result.messages[0]!.role).toBe('user')
     const message = result.messages[0]! as UserMessage
     expect(message.content).toEqual([
       {
