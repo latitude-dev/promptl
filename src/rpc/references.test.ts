@@ -77,8 +77,14 @@ describe('buildReferenceFn', () => {
 
   it('returns undefined for missing references', async () => {
     const fn = buildReferenceFn({})
-    const result = await fn('nonexistent', undefined)
+    expect(fn).toBeDefined()
+    const result = await fn!('nonexistent', undefined)
     expect(result).toBeUndefined()
+  })
+
+  it('returns undefined when references is undefined', () => {
+    const fn = buildReferenceFn(undefined)
+    expect(fn).toBeUndefined()
   })
 })
 
