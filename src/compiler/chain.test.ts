@@ -448,6 +448,37 @@ describe('chain', async () => {
     })
   })
 
+  it('handles nested loops with steps and varying inner array sizes', async () => {
+    const prompt = removeCommonIndent(`
+      {{for group in groups}}
+        {{for item in group.items}}
+          <user>{{group.name}}-{{item}}</user>
+          <${TAG_NAMES.step} />
+        {{endfor}}
+      {{endfor}}
+    `)
+
+    const chain = new Chain({
+      prompt,
+      parameters: {
+        groups: [
+          { name: 'A', items: ['x'] },
+          { name: 'B', items: ['y', 'z'] },
+          { name: 'C', items: ['w'] },
+        ],
+      },
+      adapter: Adapters.default,
+    })
+
+    const { messages } = await complete({ chain })
+    const userMessages = messages.filter((m) => m.role === MessageRole.user)
+    const userTexts = userMessages.map((m) =>
+      m.content.map((c) => (c as TextContent).text).join(''),
+    )
+
+    expect(userTexts).toEqual(['A-x', 'B-y', 'B-z', 'C-w'])
+  })
+
   it('saves the response in a variable', async () => {
     const prompt = removeCommonIndent(`
       <${TAG_NAMES.step} raw="rawResponse" as="responseText"/>

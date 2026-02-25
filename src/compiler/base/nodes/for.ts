@@ -1,12 +1,31 @@
 import { hasContent, isIterable } from '$promptl/compiler/utils'
 import errors from '$promptl/error/errors'
-import { ForBlock } from '$promptl/parser/interfaces'
+import { ForBlock, TemplateNode } from '$promptl/parser/interfaces'
 
 import { CompileNodeContext, TemplateNodeWithStatus } from '../types'
 
 type ForNodeWithStatus = TemplateNodeWithStatus & {
   status: TemplateNodeWithStatus['status'] & {
     loopIterationIndex: number
+    loopInvocationCount: number
+  }
+}
+
+function clearNodeStatus(node: TemplateNode): void {
+  const n = node as TemplateNodeWithStatus
+  if (n.status) {
+    delete n.status.completedAs
+    delete n.status.scopePointers
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      clearNodeStatus(child)
+    }
+  }
+  if ('else' in node && node.else?.children) {
+    for (const child of node.else.children) {
+      clearNodeStatus(child)
+    }
   }
 }
 
@@ -59,6 +78,7 @@ export async function compile({
     )
   }
 
+  const invocationCount = nodeWithStatus.status.loopInvocationCount ?? 0
   let i = 0
 
   for await (const element of iterableElement) {
@@ -80,7 +100,7 @@ export async function compile({
         isInsideMessageTag,
         isInsideContentTag,
         fullPath,
-        completedValue: `step_${i}`,
+        completedValue: `step_${invocationCount}_${i}`,
       })
     }
 
@@ -90,5 +110,10 @@ export async function compile({
   nodeWithStatus.status = {
     ...nodeWithStatus.status,
     loopIterationIndex: 0,
+    loopInvocationCount: invocationCount + 1,
+  }
+
+  for (const child of node.children ?? []) {
+    clearNodeStatus(child)
   }
 }
