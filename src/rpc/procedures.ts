@@ -2,12 +2,23 @@ import { render, scan, SerializedChain } from '../compiler'
 import { Chain, StepResponse } from '../compiler/chain'
 import { AdapterKey, getAdapter } from '../providers'
 import { Message, MessageRole } from '../types'
+import { buildReferenceFn } from './references'
 import { RPC } from './types'
 
 export default {
-  [RPC.Procedure.ScanPrompt]: async ({ prompt }: { prompt: string }) => {
+  [RPC.Procedure.ScanPrompt]: async ({
+    prompt,
+    fullPath,
+    references,
+  }: {
+    prompt: string
+    fullPath?: string
+    references?: Record<string, string>
+  }) => {
     const result = await scan({
       prompt: prompt,
+      fullPath: fullPath,
+      referenceFn: buildReferenceFn(references),
     })
 
     return {
@@ -27,12 +38,16 @@ export default {
     adapter,
     defaultRole,
     includeSourceMap,
+    fullPath,
+    references,
   }: {
     prompt: string
     parameters?: Record<string, unknown>
     adapter?: AdapterKey
     defaultRole?: MessageRole
     includeSourceMap?: boolean
+    fullPath?: string
+    references?: Record<string, string>
   }) => {
     const result = await render({
       prompt: prompt,
@@ -40,6 +55,8 @@ export default {
       adapter: adapter ? getAdapter(adapter) : undefined,
       defaultRole: defaultRole,
       includeSourceMap: includeSourceMap,
+      fullPath: fullPath,
+      referenceFn: buildReferenceFn(references),
     })
 
     return {
@@ -54,15 +71,30 @@ export default {
     adapter,
     defaultRole,
     includeSourceMap,
+    fullPath,
+    references,
   }: {
     prompt: string
     parameters?: Record<string, unknown>
     adapter?: AdapterKey
     defaultRole?: MessageRole
     includeSourceMap?: boolean
+    fullPath?: string
+    references?: Record<string, string>
   }) => {
+    let resolvedPrompt
+    if (references) {
+      resolvedPrompt = (
+        await scan({
+          prompt: prompt,
+          fullPath: fullPath,
+          referenceFn: buildReferenceFn(references),
+        })
+      ).resolvedPrompt
+    }
+
     return new Chain({
-      prompt: prompt,
+      prompt: resolvedPrompt ?? prompt,
       parameters: parameters,
       adapter: adapter ? getAdapter(adapter) : undefined,
       defaultRole: defaultRole,

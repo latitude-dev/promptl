@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-02-25
+
+### Added
+
+- RPC procedures `scanPrompt`, `renderPrompt`, and `createChain` now accept optional `references` (`Record<string, string>`) and `fullPath` parameters to support prompt references (`<prompt path="..." />`) over the WASM RPC boundary.
+- When `references` is provided to `createChain`, references are pre-resolved via `scan()` so that subsequent `stepChain` calls carry no reference overhead.
+
+### Changed
+
+- Increased RPC receive buffer size from 1KB to 16KB for better throughput with larger payloads.
+
 ## [0.11.0] - 2026-02-25
 
 ### Fixed
