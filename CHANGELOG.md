@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-02-25
+
+### Fixed
+
+- Nested loops bug: inner loop elements skipped across outer iterations.
+
 ## [0.10.0] - 2026-02-02
 
 ### Changed
