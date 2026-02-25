@@ -1,13 +1,21 @@
 // Run `pnpm build:rpc` before running this example
 
 import assert from 'node:assert'
-import { type FileHandle, mkdir, open, readFile, writeFile } from 'node:fs/promises'
+import {
+  type FileHandle,
+  mkdir,
+  open,
+  readFile,
+  writeFile,
+} from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { inspect } from 'node:util'
 import { WASI } from 'node:wasi'
 
-const PROMPTL_WASM_PATH = './dist/promptl.wasm'
+const PROMPTL_WASM_PATH = './dist-rpc/promptl.wasm'
+
+// --- Example 1: Basic chain without references ---
 
 const prompt = `
 <step>
@@ -33,16 +41,57 @@ chain = await createChain(prompt);
 assert(chain.completed)
 assert(conversation.completed)
 
+console.log('--- Basic chain ---')
 console.log(inspect(conversation.messages, { depth: null }))
+
+// --- Example 2: Chain with prompt references ---
+
+const mainPrompt = `
+<step>
+  <prompt path="instructions" />
+  <user>
+    Tell me about {{ topic }}.
+  </user>
+</step>
+`
+
+const references = {
+  instructions: `
+<system>
+  You are an expert assistant. Always be concise.
+</system>
+  `,
+}
+
+let refChain, refConversation
+refChain = await createChain(mainPrompt, {
+  parameters: { topic: 'TypeScript' },
+  references: references,
+});
+({ chain: refChain, ...refConversation } = await stepChain(refChain));
+({ chain: refChain, ...refConversation } = await stepChain(refChain, 'It is good!'));
+
+assert(refChain.completed)
+assert(refConversation.completed)
+
+console.log('\n--- Chain with references ---')
+console.log(inspect(refConversation.messages, { depth: null }))
 
 // Utility functions
 
-async function createChain(prompt: string): Promise<any> {
+async function createChain(
+  prompt: string,
+  opts?: {
+    parameters?: Record<string, unknown>
+    references?: Record<string, string>
+  },
+): Promise<any> {
   return await execute([
     {
       procedure: 'createChain',
       parameters: {
-        prompt: prompt,
+        prompt,
+        ...opts,
       },
     },
   ]).then((result) => {

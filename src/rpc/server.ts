@@ -7,40 +7,35 @@ const enum Fd {
   StdErr = 2,
 }
 
-const CHUNK_SIZE = 1024
+const CHUNK_SIZE = 16384
 
 const decoder = new TextDecoder()
 const encoder = new TextEncoder()
 
 function receive(): RPC.Call<any>[] {
-  const chunks = []
+  const chunks: Uint8Array[] = []
   let size = 0
 
   while (true) {
     const chunk = new Uint8Array(CHUNK_SIZE)
-
     const bytes = Javy.IO.readSync(Fd.StdIn, chunk)
-    if (bytes === 0) {
-      break
-    }
-
+    if (bytes === 0) break
     size += bytes
     chunks.push(chunk.subarray(0, bytes))
   }
 
-  const { calls } = chunks.reduce(
-    ({ offset, calls }, chunk) => {
-      calls.set(chunk, offset)
-      offset += chunk.length
+  if (chunks.length === 1) {
+    return JSON.parse(decoder.decode(chunks[0]!).trim())
+  }
 
-      return { offset, calls }
-    },
-    { offset: 0, calls: new Uint8Array(size) },
-  )
+  const buffer = new Uint8Array(size)
+  let offset = 0
+  for (const chunk of chunks) {
+    buffer.set(chunk, offset)
+    offset += chunk.length
+  }
 
-  const payload = JSON.parse(decoder.decode(calls).trim())
-
-  return payload
+  return JSON.parse(decoder.decode(buffer).trim())
 }
 
 function jsonReplacer(_key: string, value: any): any {
