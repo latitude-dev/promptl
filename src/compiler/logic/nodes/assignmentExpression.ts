@@ -1,4 +1,8 @@
-import { ASSIGNMENT_OPERATOR_METHODS } from '$promptl/compiler/logic/operators'
+import {
+  ASSIGNMENT_OPERATOR_METHODS,
+  hasOwn,
+  isBlockedMemberKey,
+} from '$promptl/compiler/logic/operators'
 import type {
   ResolveNodeProps,
   UpdateScopeContextProps,
@@ -123,6 +127,10 @@ async function assignToProperty({
       : (node.property as Identifier).name
   ) as string
 
+  if (isBlockedMemberKey(property)) {
+    raiseError(errors.forbiddenPropertyAccess(String(property)), node)
+  }
+
   if (assignmentOperator != '=' && !(property in object)) {
     raiseError(errors.propertyNotExists(property), node)
   }
@@ -154,7 +162,7 @@ export function updateScopeContext({
   if (node.left.type === 'Identifier') {
     // Variable assignment
     const assignedVariableName = (node.left as Identifier).name
-    if (assignedVariableName in builtins) {
+    if (hasOwn(builtins, assignedVariableName)) {
       raiseError(errors.assignmentToBuiltin(assignedVariableName), node)
     }
     if (assignmentOperator != '=') {

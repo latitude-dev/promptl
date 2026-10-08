@@ -1,3 +1,4 @@
+import { hasOwn } from '$promptl/compiler/logic/operators'
 import type {
   ResolveNodeProps,
   UpdateScopeContextProps,
@@ -14,7 +15,7 @@ export async function resolve({
   scope,
   builtins,
 }: ResolveNodeProps<Identifier>) {
-  if (node.name in builtins) {
+  if (hasOwn(builtins, node.name)) {
     return builtins[node.name]!()
   }
   if (!scope.exists(node.name)) {
@@ -29,7 +30,7 @@ export function updateScopeContext({
   builtins,
   raiseError,
 }: UpdateScopeContextProps<Identifier>) {
-  if (node.name in builtins) {
+  if (hasOwn(builtins, node.name)) {
     return
   }
   if (!scopeContext.definedVariables.has(node.name)) {

@@ -30,7 +30,7 @@ export default class Scope {
 
   constructor(initialState: Record<string, unknown> = {}) {
     for (const [key, value] of Object.entries(initialState)) {
-      this.localPointers[key] = this.addToStash(value)
+      this.setPointer(key, this.addToStash(value))
     }
   }
 
@@ -41,11 +41,11 @@ export default class Scope {
   }
 
   exists(name: string): boolean {
-    return name in this.localPointers
+    return Object.prototype.hasOwnProperty.call(this.localPointers, name)
   }
 
   get(name: string): unknown {
-    const index = this.localPointers[name] ?? undefined
+    const index = this.exists(name) ? this.localPointers[name] : undefined
 
     if (index === undefined) {
       throw new Error(`Variable '${name}' does not exist`)
@@ -56,7 +56,7 @@ export default class Scope {
 
   set(name: string, value: unknown): void {
     if (!this.exists(name)) {
-      this.localPointers[name] = this.addToStash(value)
+      this.setPointer(name, this.addToStash(value))
       return
     }
     const index = this.localPointers[name]!
@@ -91,6 +91,15 @@ export default class Scope {
       stash: this.globalStash,
       pointers: this.localPointers,
     }
+  }
+
+  private setPointer(name: string, index: number): void {
+    Object.defineProperty(this.localPointers, name, {
+      value: index,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    })
   }
 
   private readFromStash(index: number): unknown {

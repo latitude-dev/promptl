@@ -9,6 +9,16 @@ import {
 import errors from '$promptl/error/errors'
 import { type Identifier, type ObjectExpression } from 'estree'
 
+// Defines an own data property, so a key such as `__proto__` never triggers the prototype setter.
+function defineOwn(object: object, key: string, value: unknown) {
+  Object.defineProperty(object, key, {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  })
+}
+
 /**
  * ### ObjectExpression
  * Represents a javascript Object
@@ -32,7 +42,7 @@ export async function resolve({
         raiseError(errors.invalidSpreadInObject(typeof spreadObject), prop)
       }
       Object.entries(spreadObject as object).forEach(([key, value]) => {
-        resolvedObject[key] = value
+        defineOwn(resolvedObject, key, value)
       })
       continue
     }
@@ -44,7 +54,7 @@ export async function resolve({
         raiseError,
         ...props,
       })
-      resolvedObject[key.name] = value
+      defineOwn(resolvedObject, key.name, value)
       continue
     }
     throw raiseError(errors.invalidObjectKey, prop)

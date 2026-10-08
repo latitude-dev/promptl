@@ -1,8 +1,13 @@
-import { MEMBER_EXPRESSION_METHOD } from '$promptl/compiler/logic/operators'
+import {
+  isBlockedMemberKey,
+  isCallableMember,
+  MEMBER_EXPRESSION_METHOD,
+} from '$promptl/compiler/logic/operators'
 import type {
   ResolveNodeProps,
   UpdateScopeContextProps,
 } from '$promptl/compiler/logic/types'
+import errors from '$promptl/error/errors'
 import type { Identifier, MemberExpression } from 'estree'
 
 import { resolveLogicNode, updateScopeContextForNode } from '..'
@@ -30,13 +35,30 @@ export async function resolve({
       })
     : (node.property as Identifier).name
 
-  return MEMBER_EXPRESSION_METHOD(object, property)
+  if (isBlockedMemberKey(property)) {
+    props.raiseError(errors.forbiddenPropertyAccess(String(property)), node)
+  }
+
+  const value = MEMBER_EXPRESSION_METHOD(object, property)
+  if (typeof value === 'function' && !isCallableMember(object, property)) {
+    props.raiseError(errors.forbiddenFunctionCall(String(property)), node)
+  }
+  return value
 }
 
 export function updateScopeContext({
   node,
   ...props
 }: UpdateScopeContextProps<MemberExpression>) {
+  if (
+    !node.computed &&
+    isBlockedMemberKey((node.property as Identifier).name)
+  ) {
+    props.raiseError(
+      errors.forbiddenPropertyAccess((node.property as Identifier).name),
+      node,
+    )
+  }
   updateScopeContextForNode({ node: node.object, ...props })
   if (node.computed) {
     updateScopeContextForNode({ node: node.property, ...props })
