@@ -2,6 +2,7 @@ import {
   isBlockedCallable,
   isBlockedMemberKey,
   isCallableMember,
+  normalizeMemberKey,
 } from '$promptl/compiler/logic/operators'
 import type {
   ResolveNodeProps,
@@ -31,27 +32,40 @@ export async function resolve(props: ResolveNodeProps<SimpleCallExpression>) {
 
     if (object == null && member.optional) return undefined
 
-    const key = member.computed
+    const raw = member.computed
       ? await resolveLogicNode({ ...props, node: member.property })
       : (member.property as Identifier).name
 
+    let key: string
+    if (member.computed) {
+      const normalized = normalizeMemberKey(raw)
+      if (normalized === undefined) {
+        return raiseError(errors.invalidMemberKey, node)
+      }
+      key = normalized
+    } else {
+      key = raw as string
+    }
+
     if (isBlockedMemberKey(key)) {
-      raiseError(errors.forbiddenPropertyAccess(String(key)), node)
+      raiseError(errors.forbiddenPropertyAccess(key), node)
     }
 
     if (object == null) {
       raiseError(errors.notAFunction(String(object)), node)
     }
 
-    const method = (object as any)[key as PropertyKey]
+    // Use the single normalized key for the real lookup — never re-coerce.
+    const method = (object as any)[key]
     if (typeof method !== 'function') {
       raiseError(errors.notAFunction(typeof method), node)
     }
+    // Check the unbound target before binding so bound Function !== Function cannot slip past.
     if (isBlockedCallable(method)) {
-      raiseError(errors.forbiddenFunctionCall(String(key)), node)
+      raiseError(errors.forbiddenFunctionCall(key), node)
     }
     if (!isCallableMember(object, key)) {
-      raiseError(errors.forbiddenFunctionCall(String(key)), node)
+      raiseError(errors.forbiddenFunctionCall(key), node)
     }
 
     const args = await resolveArgs(props)

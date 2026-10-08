@@ -246,6 +246,77 @@ describe('expression sandboxing', () => {
     ).toBe('AB')
   })
 
+  it('rejects non-primitive computed keys on the read path', async () => {
+    const before = Object.getOwnPropertyDescriptors(Object.prototype)
+    const seq = ['toFixed', 'constructor']
+    await expectRejected('{{ (1)[k] }}', 'invalid-member-key', {
+      k: { toString: seq.shift.bind(seq) },
+    })
+    await expectRejected('{{ (1)[k] }}', 'invalid-member-key', {
+      k: { toString: () => 'constructor' },
+    })
+    await expectRejected('{{ ""[k] }}', 'invalid-member-key', {
+      k: {
+        valueOf: () => 'constructor',
+        toString: () => 'constructor',
+      },
+    })
+    await expectRejected('{{ (1)[k] }}', 'invalid-member-key', {
+      k: ['constructor'],
+    })
+    await expectRejected(
+      "{{ k = { toString: ['toFixed', 'constructor'].shift } }}{{ (1)[k] }}",
+      'invalid-member-key',
+    )
+    expect(Object.getOwnPropertyDescriptors(Object.prototype)).toEqual(before)
+    expect((globalThis as any).__pwn).toBeUndefined()
+  })
+
+  it('rejects non-primitive computed keys on the write path', async () => {
+    const before = Object.getOwnPropertyDescriptors(Object.prototype)
+    await expectRejected(
+      "{{ k = { toString: ['a', '__proto__'].shift } }}{{ o = {} }}{{ o[k] = { polluted: 1 } }}",
+      'invalid-member-key',
+    )
+    expect(Object.getOwnPropertyDescriptors(Object.prototype)).toEqual(before)
+    expect('polluted' in Object.prototype).toBe(false)
+  })
+
+  it('rejects the stateful toString constructor chain', async () => {
+    delete (globalThis as any).__pwn
+    const K = (slot: string, pad: string) =>
+      `{ toString: ['${pad}','${pad}','${slot}','${pad}','${pad}','${pad}'].shift }`
+    await expectRejected(
+      `{{ ka = ${K('constructor', 'toFixed')} }}{{ kb = ${K('constructor', 'toString')} }}` +
+        `{{ c = (1)[ka] }}{{ F = c[kb] }}{{ g = F("globalThis.__pwn='x'; return 42") }}{{ g() }}`,
+      'invalid-member-key',
+    )
+    expect((globalThis as any).__pwn).toBeUndefined()
+  })
+
+  it('checks callables before binding', async () => {
+    await expectRejected(
+      '{{ f = box[0] }}{{ f("return 42")() }}',
+      forbiddenFunctionCall,
+      { box: [Function] },
+    )
+    await expectRejected('{{ box[0]("return 42")() }}', forbiddenFunctionCall, {
+      box: [Function],
+    })
+  })
+
+  it('still allows string and number computed keys', async () => {
+    expect(await getText("{{ o = { a: 1 } }}{{ o['a'] }}")).toBe('1')
+    expect(await getText('{{ a = [10, 20] }}{{ a[1] }}')).toBe('20')
+    expect(await getText("{{ o = {} }}{{ o[1] = 'x' }}{{ o['1'] }}")).toBe('x')
+  })
+
+  it('rejects non-primitive keys in the in operator', async () => {
+    await expectRejected('{{ k in { a: 1 } }}', 'invalid-member-key', {
+      k: { toString: () => 'a' },
+    })
+  })
+
   it('reports forbidden property access during scanning', async () => {
     const metadata = await scan({
       prompt: "{{ (1).constructor.constructor('return 1')() }}",

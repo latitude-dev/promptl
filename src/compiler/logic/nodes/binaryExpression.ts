@@ -1,4 +1,7 @@
-import { BINARY_OPERATOR_METHODS } from '$promptl/compiler/logic/operators'
+import {
+  BINARY_OPERATOR_METHODS,
+  normalizeMemberKey,
+} from '$promptl/compiler/logic/operators'
 import type {
   ResolveNodeProps,
   UpdateScopeContextProps,
@@ -20,7 +23,10 @@ export async function resolve({
   ...props
 }: ResolveNodeProps<BinaryExpression | LogicalExpression>) {
   const binaryOperator = node.operator
-  if (!(binaryOperator in BINARY_OPERATOR_METHODS)) {
+  if (
+    binaryOperator !== 'in' &&
+    !(binaryOperator in BINARY_OPERATOR_METHODS)
+  ) {
     raiseError(errors.unsupportedOperator(binaryOperator), node)
   }
   const leftOperand = await resolveLogicNode({
@@ -34,6 +40,16 @@ export async function resolve({
     ...props,
   })
 
+  // `in` coerces the left operand to a property key — normalize once so a
+  // stateful toString/valueOf object cannot bypass the blocked-key check.
+  if (binaryOperator === 'in') {
+    const key = normalizeMemberKey(leftOperand)
+    if (key === undefined) {
+      return raiseError(errors.invalidMemberKey, node)
+    }
+    return key in (rightOperand as object)
+  }
+
   return BINARY_OPERATOR_METHODS[binaryOperator]?.(leftOperand, rightOperand)
 }
 
@@ -42,7 +58,10 @@ export function updateScopeContext({
   ...props
 }: UpdateScopeContextProps<BinaryExpression | LogicalExpression>) {
   const binaryOperator = node.operator
-  if (!(binaryOperator in BINARY_OPERATOR_METHODS)) {
+  if (
+    binaryOperator !== 'in' &&
+    !(binaryOperator in BINARY_OPERATOR_METHODS)
+  ) {
     props.raiseError(errors.unsupportedOperator(binaryOperator), node)
   }
 
