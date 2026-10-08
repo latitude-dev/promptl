@@ -1,4 +1,9 @@
-import { ASSIGNMENT_OPERATOR_METHODS } from '$promptl/compiler/logic/operators'
+import {
+  ASSIGNMENT_OPERATOR_METHODS,
+  hasOwn,
+  isBlockedMemberKey,
+  normalizeMemberKey,
+} from '$promptl/compiler/logic/operators'
 import type {
   ResolveNodeProps,
   UpdateScopeContextProps,
@@ -114,14 +119,27 @@ async function assignToProperty({
     ...props,
   })) as { [key: string]: any }
 
-  const property = (
-    node.computed
-      ? await resolveLogicNode({
-          node: node.property,
-          ...props,
-        })
-      : (node.property as Identifier).name
-  ) as string
+  const raw = node.computed
+    ? await resolveLogicNode({
+        node: node.property,
+        ...props,
+      })
+    : (node.property as Identifier).name
+
+  let property: string
+  if (node.computed) {
+    const normalized = normalizeMemberKey(raw)
+    if (normalized === undefined) {
+      return raiseError(errors.invalidMemberKey, node)
+    }
+    property = normalized
+  } else {
+    property = raw as string
+  }
+
+  if (isBlockedMemberKey(property)) {
+    raiseError(errors.forbiddenPropertyAccess(property), node)
+  }
 
   if (assignmentOperator != '=' && !(property in object)) {
     raiseError(errors.propertyNotExists(property), node)
@@ -154,7 +172,7 @@ export function updateScopeContext({
   if (node.left.type === 'Identifier') {
     // Variable assignment
     const assignedVariableName = (node.left as Identifier).name
-    if (assignedVariableName in builtins) {
+    if (hasOwn(builtins, assignedVariableName)) {
       raiseError(errors.assignmentToBuiltin(assignedVariableName), node)
     }
     if (assignmentOperator != '=') {

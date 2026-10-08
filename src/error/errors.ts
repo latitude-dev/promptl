@@ -279,6 +279,18 @@ export default {
     code: 'property-not-exists',
     message: `Property '${property}' does not exist on object`,
   }),
+  invalidMemberKey: {
+    code: 'invalid-member-key',
+    message: 'Member keys must be strings or numbers',
+  },
+  forbiddenPropertyAccess: (property: string) => ({
+    code: 'forbidden-property-access',
+    message: `Access to property '${property}' is not allowed`,
+  }),
+  forbiddenFunctionCall: (name: string) => ({
+    code: 'forbidden-function-call',
+    message: `Calling '${name}' is not allowed`,
+  }),
   notAFunction: (objectType: string) => ({
     code: 'not-a-function',
     message: `'${objectType}' is not a function`,
