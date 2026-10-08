@@ -311,6 +311,77 @@ describe('expression sandboxing', () => {
     expect(await getText("{{ o = {} }}{{ o[1] = 'x' }}{{ o['1'] }}")).toBe('x')
   })
 
+  it('converts undefined, null, boolean and bigint keys like main', async () => {
+    // Missing variable → undefined key → reads o["undefined"] (absent) → empty, matching 0.12.0
+    // Both 0.12.0 and this PR render no message content for a missing key;
+    // getText returns undefined when messages is empty, so normalize to ''.
+    expect(
+      (await getText('{{ translations[locale] }}', {
+        translations: { en: 'Hello' },
+      })) ?? '',
+    ).toBe('')
+    expect(
+      await getText('{{ o[u] }}', {
+        o: { undefined: 'U' },
+        u: undefined,
+      }),
+    ).toBe('U')
+    expect(
+      await getText('{{ o[n] }}', {
+        o: { null: 'N' },
+        n: null,
+      }),
+    ).toBe('N')
+    expect(
+      await getText('{{ o[t] }}', {
+        o: { true: 'T', false: 'F' },
+        t: true,
+      }),
+    ).toBe('T')
+    expect(
+      await getText('{{ o[f] }}', {
+        o: { true: 'T', false: 'F' },
+        f: false,
+      }),
+    ).toBe('F')
+    expect(
+      await getText('{{ o[b] }}', {
+        o: { '1': 'one' },
+        b: 1n,
+      }),
+    ).toBe('one')
+  })
+
+  it('converts primitive keys for in and assignment like main', async () => {
+    expect(
+      await getText('{{ u in o }}', {
+        o: { undefined: 1 },
+        u: undefined,
+      }),
+    ).toBe('true')
+    expect(
+      await getText('{{ n in o }}', {
+        o: { null: 1 },
+        n: null,
+      }),
+    ).toBe('true')
+    expect(
+      await getText("{{ o = {} }}{{ o[u] = 'x' }}{{ o['undefined'] }}", {
+        u: undefined,
+      }),
+    ).toBe('x')
+    expect(
+      await getText("{{ o = {} }}{{ o[n] = 'y' }}{{ o['null'] }}", {
+        n: null,
+      }),
+    ).toBe('y')
+    expect(
+      await getText("{{ o = {} }}{{ o[t] = 'z' }}{{ o['true'] }}", {
+        t: true,
+      }),
+    ).toBe('z')
+  })
+
   it('rejects non-primitive keys in the in operator', async () => {
     await expectRejected('{{ k in { a: 1 } }}', 'invalid-member-key', {
       k: { toString: () => 'a' },

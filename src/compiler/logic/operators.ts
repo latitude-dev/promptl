@@ -53,15 +53,25 @@ export const BLOCKED_MEMBER_KEYS = new Set([
 ])
 
 /**
- * Normalize a computed member key to a string exactly once. Only plain strings and
- * numbers are accepted — objects, arrays, functions, symbols, etc. are rejected so a
- * key cannot coerce to different names between the blocked-key check and the real
- * property lookup.
+ * Normalize a computed member key to a string exactly once. Primitives (string, number,
+ * boolean, bigint, null, undefined) are converted with String() a single time and that
+ * value is reused for the blocked-key check, the real property read/write, and the
+ * callable check. Objects (including arrays), functions and symbols are rejected so a
+ * key cannot coerce to different names between the guard and the lookup.
+ * typeof null === "object", so null is converted before the object rejection.
  */
 export function normalizeMemberKey(key: unknown): string | undefined {
+  if (key === null || key === undefined) return String(key)
   const type = typeof key
-  if (type === 'string') return key as string
-  if (type === 'number') return String(key)
+  if (
+    type === 'string' ||
+    type === 'number' ||
+    type === 'boolean' ||
+    type === 'bigint'
+  ) {
+    return String(key)
+  }
+  // objects (incl. arrays), functions, symbols, and anything else
   return undefined
 }
 
