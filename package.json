@@ -3,6 +3,10 @@
   "version": "0.12.1",
   "author": "Latitude Data",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/latitude-dev/promptl"
+  },
   "description": "Compiler for PromptL, the prompt language",
   "type": "module",
   "main": "./dist/index.cjs",
